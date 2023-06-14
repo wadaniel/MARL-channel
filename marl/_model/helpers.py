@@ -1,5 +1,9 @@
 import numpy as np
 
+
+def fieldToState(field):
+    return field.flatten().tolist()
+
 def distribute_field(field,agents,nctrlx,nctrlz,partial_reward,reward=True):
     distributed_fields = {}
     for i_a,agent in enumerate(agents):

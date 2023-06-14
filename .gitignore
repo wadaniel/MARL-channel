@@ -1,2 +1,15 @@
+#SIMSON
+*.uu
 *.out
+*.stat
+
+#VIM
+*.swp
+*.swo
+
+#MISC
 __pycache__/
+
+#KORALI
+_korali*
+_result*

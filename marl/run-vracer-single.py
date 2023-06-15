@@ -54,7 +54,7 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-print("Running Cartpole example with arguments:")
+print("Running Flow control with arguments:")
 print(args)
 ####### Defining Korali Problem
 
@@ -67,7 +67,7 @@ e["Problem"]["Type"] = "Reinforcement Learning / Continuous"
 e["Problem"]["Environment Function"] = env
 e["Problem"]["Testing Frequency"] = 10
 
-nState = args.nx*args.nz
+nState = 2*args.nx*args.nz
 for i in range(nState):
     e["Variables"][i]["Name"] = "Sensor No. " + str(i)
     e["Variables"][i]["Type"] = "State"
@@ -84,10 +84,10 @@ for a in range(nState, nState+args.nctrlx*args.nctrlz):
 e["Solver"]["Type"] = "Agent / Continuous / VRACER"
 e["Solver"]["Mode"] = "Training"
 e["Solver"]["Experiences Between Policy Updates"] = 1
-e["Solver"]["Episodes Per Generation"] = 10
+e["Solver"]["Episodes Per Generation"] = 1*args.concurrentWorkers
 e["Solver"]["Concurrent Workers"] = args.concurrentWorkers
 
-e["Solver"]["Experience Replay"]["Start Size"] = 131072
+e["Solver"]["Experience Replay"]["Start Size"] = 3*2000*args.concurrentWorkers #131072
 e["Solver"]["Experience Replay"]["Maximum Size"] = 262144
 e["Solver"]["Experience Replay"]["Off Policy"]["REFER Beta"]= 0.3
 
@@ -104,13 +104,13 @@ e["Solver"]["Neural Network"]["Optimizer"] = "Adam"
 e["Solver"]["Policy"]["Distribution"] = "Clipped Normal"
 
 e["Solver"]["Neural Network"]["Hidden Layers"][0]["Type"] = "Layer/Linear"
-e["Solver"]["Neural Network"]["Hidden Layers"][0]["Output Channels"] = 256
+e["Solver"]["Neural Network"]["Hidden Layers"][0]["Output Channels"] = 128
 
 e["Solver"]["Neural Network"]["Hidden Layers"][1]["Type"] = "Layer/Activation"
 e["Solver"]["Neural Network"]["Hidden Layers"][1]["Function"] = "Elementwise/Tanh"
 
 e["Solver"]["Neural Network"]["Hidden Layers"][2]["Type"] = "Layer/Linear"
-e["Solver"]["Neural Network"]["Hidden Layers"][2]["Output Channels"] = 256
+e["Solver"]["Neural Network"]["Hidden Layers"][2]["Output Channels"] = 128
 
 e["Solver"]["Neural Network"]["Hidden Layers"][3]["Type"] = "Layer/Activation"
 e["Solver"]["Neural Network"]["Hidden Layers"][3]["Function"] = "Elementwise/Tanh"

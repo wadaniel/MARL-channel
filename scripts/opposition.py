@@ -36,22 +36,18 @@ xchange = 1
 zchange = 1
 
 # Load the reference average du/dy at the wall to use as baseline (for wbci 6 or 7)
-opposition_dudy_dict = {"180_16x65x16"   : 3.7398798426242075,
+baseline_dudy_dict = {"180_16x65x16"   : 3.7398798426242075,
                       "180_32x33x32"   : 3.909412638928125,
                       "180_32x65x32"   : 3.7350180468974763,#
                       "180_64x65x64"   : 3.82829465265046,
                       "180_128x65x128" : 3.82829465265046}
 
-#noctrl_dudy_dict = {"180_16x65x16"   : 20.492} #WRONG
+baseline_dudy = baseline_dudy_dict[f"{int(retau)}_{nx}x{ny}x{nz}"]
 
+alpha = 1.0
+maxSteps = 3000
 
-baseline_dudy = opposition_dudy_dict[f"{int(retau)}_{nx}x{ny}x{nz}"]
-#baseline_dudy = noctrl_dudy_dict[f"{int(retau)}_{nx}x{ny}x{nz}"]
-
-
-maxSteps = 2000
-
-def env(s):
+if __name__ == "__main__":
 
     #print(f"Launching SIMSON from workdir {workDir}",flush=True)
     mpi_info = MPI.Info.Create()
@@ -66,12 +62,11 @@ def env(s):
         for zidx in range(nz):
             subComm.Recv([field[plidx-1,zidx,:], MPI.DOUBLE], source=0, tag=maxProc+10+plidx+zidx+1)
 
-    state = fieldToState(field)
-    s["State"] = state
+    #state = fieldToState(field)
 
     step = 0
     done = False
-    cumReward = 0.
+    stresses = []
 
     # Receiving initial time of the simulation
     initTime = np.array(0,dtype=np.double)
@@ -80,11 +75,10 @@ def env(s):
 
     while not done and step < maxSteps:
 
-        # Getting new action from korali
-        s.update()
+        # Calculating new action
+        control = np.zeros((nctrlz, nctrlx))
     
         # Retrieve control from korali
-        control = s["Action"] 
         control = np.reshape(control,(nctrlz, nctrlx))
         control -= np.mean(control)
 
@@ -117,14 +111,12 @@ def env(s):
         # Distributing the field to compute the individual reward per each agent
         wallStresses = distribute_field(np.expand_dims(uxzAvg,0),agents,nctrlx,nctrlz,partial_reward,reward=True)
 
-        # Computing the reward
-        reward = 0.
+        # Computing wall stresses
+        avgStress = 0.
         for agent in agents:
-            reward += 1-np.mean(wallStresses[agent])/baseline_dudy
-        reward /= len(agents)
-        cumReward += reward
-        #print(f"Reward {reward}, Stress {wallStresses[agent[0]]}",flush=True)
-        s["Reward"] = reward
+            avgStress += np.mean(wallStresses[agent])
+        avgStress /= len(agents)
+        stresses.append(avgStress)
 
         #print("Python receiving state from Fortran", flush=True)
         subComm.Send([requestState, MPI.CHARACTER], dest=0, tag=maxProc+100)
@@ -133,8 +125,7 @@ def env(s):
             for zidx in range(nz):
                 subComm.Recv([field[plidx-1,zidx,:], MPI.DOUBLE], source=0, tag=maxProc+10+plidx+zidx+1)
 
-        state = fieldToState(field)
-        s["State"] = state
+        #state = fieldToState(field)
 
         prevTime = currentTime
         currentTime = np.array(0,dtype=np.double)
@@ -142,14 +133,12 @@ def env(s):
 
         step = step + 1
         if (step % 10 == 0):
-            print(f"Step {step}, t={currentTime} (dt={(currentTime-prevTime):.3}), reward {reward:.3f}, reward mean {(cumReward/step):.3f}",flush=True)
+            print(f"Step {step}, t={currentTime:.3f} (dt={(currentTime-prevTime):.3}), avg stress {avgStress:.3f}, stress mean {np.mean(stresses):.3f} sdev {np.std(stresses):.3f}",flush=True)
 
         # Terminate if max simulation time reached
         if currentTime - initTime > 200000:
             done = True
 
-    s["Termination"] = "Terminal"
     print("Python sending terminate message to Fortran")
     subComm.Send([requestTerm, MPI.CHARACTER], dest=0, tag=maxProc+100)
     subComm.Disconnect()
-

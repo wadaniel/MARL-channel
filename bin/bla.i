@@ -1,7 +1,6 @@
 # bla.i file written by the python wrapper
 # Spatial channel flow simulation
 20070716
-#../../../data/baseline/init_16x65x16_minchan_000.u                              
 ../uinit/init_16x65x16_minchan_000.u                              
 end.uu                                                                          
 20000.0000

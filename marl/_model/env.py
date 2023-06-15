@@ -42,16 +42,9 @@ opposition_dudy_dict = {"180_16x65x16"   : 3.7398798426242075,
                       "180_64x65x64"   : 3.82829465265046,
                       "180_128x65x128" : 3.82829465265046}
 
-#noctrl_dudy_dict = {"180_16x65x16"   : 20.492} #WRONG
-
-
 baseline_dudy = opposition_dudy_dict[f"{int(retau)}_{nx}x{ny}x{nz}"]
-#baseline_dudy = noctrl_dudy_dict[f"{int(retau)}_{nx}x{ny}x{nz}"]
 
-
-maxSteps = 2000
-
-def env(s):
+def env(s, args):
 
     #print(f"Launching SIMSON from workdir {workDir}",flush=True)
     mpi_info = MPI.Info.Create()
@@ -66,7 +59,7 @@ def env(s):
         for zidx in range(nz):
             subComm.Recv([field[plidx-1,zidx,:], MPI.DOUBLE], source=0, tag=maxProc+10+plidx+zidx+1)
 
-    state = fieldToState(field)
+    state = fieldToState(field, compression=args.compression)
     s["State"] = state
 
     step = 0
@@ -78,7 +71,7 @@ def env(s):
     subComm.Recv([initTime, MPI.DOUBLE], source=0, tag=maxProc+960)
     currentTime = initTime
 
-    while not done and step < maxSteps:
+    while not done and step < args.episodelength:
 
         # Getting new action from korali
         s.update()
@@ -133,7 +126,7 @@ def env(s):
             for zidx in range(nz):
                 subComm.Recv([field[plidx-1,zidx,:], MPI.DOUBLE], source=0, tag=maxProc+10+plidx+zidx+1)
 
-        state = fieldToState(field)
+        state = fieldToState(field, compression=args.compression)
         s["State"] = state
 
         prevTime = currentTime

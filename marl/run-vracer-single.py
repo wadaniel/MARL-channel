@@ -53,6 +53,8 @@ parser.add_argument(
 
 
 args = parser.parse_args()
+args.compression = 4
+args.episodelength = 500
 
 print("Running Flow control with arguments:")
 print(args)
@@ -64,10 +66,10 @@ e = korali.Experiment()
 
 ### Defining the Cartpole problem's configuration
 e["Problem"]["Type"] = "Reinforcement Learning / Continuous"
-e["Problem"]["Environment Function"] = env
+e["Problem"]["Environment Function"] = lambda s : env(s, args)
 e["Problem"]["Testing Frequency"] = 10
 
-nState = 2*args.nx*args.nz
+nState = 2*args.nx*args.nz//(args.compression**2)
 for i in range(nState):
     e["Variables"][i]["Name"] = "Sensor No. " + str(i)
     e["Variables"][i]["Type"] = "State"
@@ -87,13 +89,13 @@ e["Solver"]["Experiences Between Policy Updates"] = 1
 e["Solver"]["Episodes Per Generation"] = 1*args.concurrentWorkers
 e["Solver"]["Concurrent Workers"] = args.concurrentWorkers
 
-e["Solver"]["Experience Replay"]["Start Size"] = 3*2000*args.concurrentWorkers #131072
+e["Solver"]["Experience Replay"]["Start Size"] = 3*args.episodelength*args.concurrentWorkers #131072
 e["Solver"]["Experience Replay"]["Maximum Size"] = 262144
 e["Solver"]["Experience Replay"]["Off Policy"]["REFER Beta"]= 0.3
 
 e["Solver"]["Discount Factor"] = 0.99
 e["Solver"]["Learning Rate"] = args.learningRate
-e["Solver"]["Mini Batch"]["Size"] = 32
+e["Solver"]["Mini Batch"]["Size"] = 128
 e["Solver"]["State Rescaling"]["Enabled"] = True
 e["Solver"]["Reward"]["Rescaling"]["Enabled"] = True
 

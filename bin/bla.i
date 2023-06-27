@@ -64,5 +64,5 @@ vxz_yp15.pl
 -0.83147
 uxz_yp15.pl                                                                     
 .true.
-80
+28
 .false.

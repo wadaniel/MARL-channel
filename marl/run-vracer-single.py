@@ -79,7 +79,7 @@ for a in range(nState, nState+args.nctrlx*args.nctrlz):
     e["Variables"][a]["Type"] = "Action"
     e["Variables"][a]["Lower Bound"] = -0.04285714285714286
     e["Variables"][a]["Upper Bound"] = +0.04285714285714286
-    e["Variables"][a]["Initial Exploration Noise"] = 0.01
+    e["Variables"][a]["Initial Exploration Noise"] = 0.03
 
 ### Defining Agent Configuration 
 

@@ -134,7 +134,7 @@ def env(s, args):
         subComm.Recv([currentTime, MPI.DOUBLE], source=0, tag=maxProc+960)
 
         step = step + 1
-        if (step % 10 == 0):
+        if (step % 100 == 0):
             print(f"Step {step}, t={currentTime} (dt={(currentTime-prevTime):.3}), reward {reward:.3f}, reward mean {(cumReward/step):.3f}",flush=True)
 
         # Terminate if max simulation time reached

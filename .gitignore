@@ -13,3 +13,6 @@ __pycache__/
 #KORALI
 _korali*
 _result*
+data*
+run*
+result*

@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 launchCommand = './bla_16x65x16_1'
 #launchCommand = './bla_16x65x16_1_debug'
 srcDir = './../bin/'
-workDir = './../run5/'
+workDir = './../run6/'
 maxProc = 1
 
 requestState = b'STATE'
@@ -106,8 +106,6 @@ def rollout():
         elif wbci == 7:
             control = calcControl(nctrlz, nctrlx, step//stepfac, maxv, version)
             control -= np.mean(control)
-
-
 
         #print(control)
         #print("Python sending control to Fortran")
@@ -239,7 +237,8 @@ if __name__ == "__main__":
     shutil.copy(srcDir + "bla_16x65x16_1", workDir)
     shutil.copy(srcDir + "bla_16x65x16_1_debug", workDir)
 
-    for v in [0,1,4,5,6]:
+    #for v in [0,1,4,5,6]:
+    for v in [0]:
         version = v
         s, r = rollout()
 

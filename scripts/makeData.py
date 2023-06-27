@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import shutil
+import pickle
 from mpi4py import MPI
 from helpers import fieldToState, calcControl, distribute_field
 import matplotlib
@@ -10,7 +11,7 @@ import matplotlib.pyplot as plt
 launchCommand = './bla_16x65x16_1'
 #launchCommand = './bla_16x65x16_1_debug'
 srcDir = './../bin/'
-workDir = './../run5/'
+workDir = './../data2/'
 maxProc = 1
 
 requestState = b'STATE'
@@ -56,18 +57,22 @@ baseline_dudy_dict = {"180_16x65x16"   : 3.7398798426242075,
 
 baseline_dudy = baseline_dudy_dict[f"{int(retau)}_{nx}x{ny}x{nz}"]
 
+version = 4
 alpha = 1.0
-maxSteps = 5000
+maxSteps = 500
 
-saveFrqncy = 500
+saveFrqncy = 250
 
 stepfac = 1
 maxv = 0.04285714285714286
 
-def rollout():
+allDataUplane = np.empty((maxSteps, nz, nx))
+allDataVplane = np.empty((maxSteps, nz, nx))
+allDataControl = np.empty((maxSteps, nz, nx))
+#allDataCovU = np.empty((nz, nx))
+#allDataCovV = np.empty((nz, nx))
 
-    global version
-    print(version)
+def rollout():
 
     #print(f"Launching SIMSON from workdir {workDir}",flush=True)
     mpi_info = MPI.Info.Create()
@@ -195,6 +200,11 @@ def rollout():
         currentTime = np.array(0,dtype=np.double)
         subComm.Recv([currentTime, MPI.DOUBLE], source=0, tag=maxProc+960)
 
+        # store data
+        allDataControl[step, :, :] = control
+        allDataVplane[step, :, :] = field[0, :, :]
+        allDataUplane[step, :, :] = field[1, :, :]
+
         step = step + 1
         if (step % 50 == 0):
             print(f"Step {step}, t={currentTime:.3f} (dt={(currentTime-prevTime):.3}), avg stress {avgStress:.3f}, stress mean {np.mean(stresses):.3f} sdev {np.std(stresses):.3f}",flush=True)
@@ -230,23 +240,18 @@ def rollout():
     
 if __name__ == "__main__":
 
-    global version
-    stresses = []
-    rewards = []
-
     os.makedirs(workDir, exist_ok=True)
     shutil.copy(srcDir + "bla.i", workDir)
     shutil.copy(srcDir + "bla_16x65x16_1", workDir)
     shutil.copy(srcDir + "bla_16x65x16_1_debug", workDir)
 
-    for v in [0,1,4,5,6]:
-        version = v
-        s, r = rollout()
+    s, r = rollout()
 
-        stresses.append(s)
-        rewards.append(r)
-        print(stresses)
-        print(rewards)
+    with open(f'{workDir}/control.pickle', 'wb') as f:
+        pickle.dump(allDataControl, f)
 
-    print(stresses)
-    print(rewards)
+    with open(f'{workDir}/fieldU.pickle', 'wb') as f:
+        pickle.dump(allDataUplane, f)
+
+    with open(f'{workDir}/fieldV.pickle', 'wb') as f:
+        pickle.dump(allDataVplane, f)

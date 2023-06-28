@@ -15,7 +15,7 @@ import seaborn as sns
 launchCommand = './bla_16x65x16_1'
 #launchCommand = './bla_16x65x16_1_debug'
 srcDir = './../bin/'
-workDirTmp = './../data_h'
+workDirTmp = './../dataNew_h'
 maxProc = 1
 
 requestState = b'STATE'
@@ -61,11 +61,12 @@ baseline_dudy_dict = {"180_16x65x16"   : 3.7398798426242075,
 
 baseline_dudy = baseline_dudy_dict[f"{int(retau)}_{nx}x{ny}x{nz}"]
 
-version = 4
+seed = 1337
+version = 0
 alpha = 1.0
 
-maxSteps = 100 #500 #100 #1000
-plotFrequency = 100 #1000
+maxSteps = 1500
+plotFrequency = 500
 Ny = maxSteps #500 
 
 stepfac = 1
@@ -111,7 +112,7 @@ def rollout(heightTuple):
 
     while not done and step < maxSteps:
 
-        control = calcControl(nctrlz, nctrlx, step//stepfac, maxv, version)
+        control = calcControl(nctrlz, nctrlx, step//stepfac, maxv, version, seed)
         control -= np.mean(control)
 
         #print(control)
@@ -145,13 +146,23 @@ def rollout(heightTuple):
         wallStresses = distribute_field(np.expand_dims(uxzAvg,0),agents,nctrlx,nctrlz,partial_reward,reward=True)
 
         if plotFrequency > 0 and step % plotFrequency == 0:
-            fieldName = f"{workDir}ux_v{version}_s{step}.png"
+            fieldName = f"{workDir}uvplane_v{version}_s{step}.png"
             print(f"saving field {fieldName}")
             fig, ax = plt.subplots(1,2)
             x, z = np.meshgrid(np.linspace(0, Lx, nx), np.linspace(0, Lz, nz))
-            c = ax[0].pcolormesh(z, x, field[0,:,:], cmap='RdBu', vmin=field[0,:,:].min(), vmax=field[0,:,:].max())
+            c = ax[0].pcolormesh(z, x, field[1,:,:], cmap='RdBu', vmin=field[1,:,:].min(), vmax=field[1,:,:].max())
+            ax[0].set_xticks(np.linspace(z.min(), z.max(), 3), minor=True)
+            ax[0].set_yticks(np.linspace(x.min(), x.max(), 3), minor=True)
+            ax[0].set_aspect('equal')
+            ax[0].set_title('u')
             fig.colorbar(c, ax=ax[0])
-            c = ax[1].pcolormesh(z, x, field[1,:,:], cmap='RdBu', vmin=field[1,:,:].min(), vmax=field[1,:,:].max())
+
+            c = ax[1].pcolormesh(z, x, field[0,:,:], cmap='RdBu', vmin=field[0,:,:].min(), vmax=field[0,:,:].max())
+            ax[1].set_xticks(np.linspace(z.min(), z.max(), 3), minor=True)
+            ax[1].set_yticks([], minor=True)
+            ax[1].set_yticklabels( () )
+            ax[1].set_aspect('equal')
+            ax[1].set_title('v')
             fig.colorbar(c, ax=ax[1])
             plt.tight_layout()
             plt.savefig(fieldName)
@@ -165,8 +176,8 @@ def rollout(heightTuple):
             c = ax.pcolormesh(z, x, control, cmap='RdBu', vmin=c_min, vmax=c_max)
             fig.colorbar(c, ax=ax)
             plt.axis('scaled')
-            plt.xticks(np.linspace(x.min(), x.max(), 3))
-            plt.yticks(np.linspace(y.min(), y.max(), 3))
+            plt.xticks(np.linspace(z.min(), z.max(), 3))
+            plt.yticks(np.linspace(x.min(), x.max(), 3))
             plt.savefig(cfieldName)
 
             wfieldName = f"{workDir}stress_v{version}_s{step}.png"
@@ -176,8 +187,8 @@ def rollout(heightTuple):
             c = ax.pcolormesh(z, x, uxzAvg, cmap='RdBu', vmin=uxzAvg.min(), vmax=uxzAvg.max())
             fig.colorbar(c, ax=ax)
             plt.axis('scaled')
-            plt.xticks(np.linspace(x.min(), x.max(), 3))
-            plt.yticks(np.linspace(y.min(), y.max(), 3))
+            plt.xticks(np.linspace(z.min(), z.max(), 3))
+            plt.yticks(np.linspace(x.min(), x.max(), 3))
             plt.savefig(wfieldName)
 
         # Computing wall stresses
@@ -209,7 +220,7 @@ def rollout(heightTuple):
         allDataUplane[step, :, :] = field[1, :, :]
 
         step = step + 1
-        if (step % 100 == 0):
+        if (step % 250 == 0):
             print(f"Step {step}, t={currentTime:.3f} (dt={(currentTime-prevTime):.3}), avg stress {avgStress:.3f}, stress mean {np.mean(stresses):.3f} sdev {np.std(stresses):.3f}",flush=True)
             print(f"Rewards {avgReward:3f} mean {np.mean(rewards):.3f} sdev {np.std(stresses):.3f}")
             print(f"Max / min control {np.max(control):.3f} {np.min(control):.3f}")
@@ -226,12 +237,12 @@ def rollout(heightTuple):
     fName = f"{workDir}rew_v{version}.png"
     print(f"saving field {fName}")
     fig, ax = plt.subplots(1,2)
-    ax[0].plot(rewards, linestyle='--', color='b')
-    ax[0].plot(np.cumsum(rewards)/np.arange(1,len(stresses)+1), linestyle='-', color='k')
-    ax[0].set_title("Rewards")
-    ax[1].plot(stresses, linestyle='--', color='b')
-    ax[1].plot(np.cumsum(stresses)/np.arange(1,len(stresses)+1), linestyle='-', color='k')
-    ax[1].set_title("Stresses")
+    ax[0].plot(rewards, linestyle=':', color='darkgreen')
+    ax[0].plot(np.cumsum(rewards)/np.arange(1,len(stresses)+1), linestyle='-', color='darkgreen', lw=2)
+    ax[0].set_title("Reward")
+    ax[1].plot(stresses, linestyle=':', color='darkred')
+    ax[1].plot(np.cumsum(stresses)/np.arange(1,len(stresses)+1), linestyle='-', color='darkred', lw=2)
+    ax[1].set_title("Stress")
     plt.tight_layout()
     plt.savefig(fName)
     plt.close('all')

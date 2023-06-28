@@ -18,8 +18,10 @@ def distribute_field(field,agents,nctrlx,nctrlz,partial_reward,reward=True):
     return distributed_fields
 
 
-def calcControl(nctrlz, nctrlx, step, maxv, version):
+def calcControl(nctrlz, nctrlx, step, maxv, version, seed=-1):
     control = np.zeros((nctrlz, nctrlx))
+    if seed > 0:
+        np.random.seed(seed)
 
     if version == 0:
         pass

@@ -1,9 +1,10 @@
 import numpy as np
 import os
+import sys
 import shutil
 import pickle
 from mpi4py import MPI
-from helpers import fieldToState, calcControl, distribute_field
+from helpers import fieldToState, calcControl, distribute_field, getHeights
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -14,7 +15,7 @@ import seaborn as sns
 launchCommand = './bla_16x65x16_1'
 #launchCommand = './bla_16x65x16_1_debug'
 srcDir = './../bin/'
-workDir = './../data3/'
+workDirTmp = './../data_h'
 maxProc = 1
 
 requestState = b'STATE'
@@ -63,22 +64,27 @@ baseline_dudy = baseline_dudy_dict[f"{int(retau)}_{nx}x{ny}x{nz}"]
 version = 4
 alpha = 1.0
 
-maxSteps = 100 #1000
-saveFrqncy = 100 #1000
+maxSteps = 100 #500 #100 #1000
+plotFrequency = 100 #1000
 Ny = maxSteps #500 
 
 stepfac = 1
 maxv = 0.04285714285714286
 
-allDataUplane = np.empty((maxSteps, nz, nx))
-allDataVplane = np.empty((maxSteps, nz, nx))
-allDataControl = np.empty((maxSteps, nz, nx))
-#allDataCovU = np.empty((nz, nx))
-#allDataCovV = np.empty((nz, nx))
+def rollout(heightTuple):
 
-def rollout():
+    ycoords, height = heightTuple
+    workDir = f"{workDirTmp}{height:.1f}/"
 
-    #print(f"Launching SIMSON from workdir {workDir}",flush=True)
+    allDataUplane = np.empty((maxSteps, nz, nx))
+    allDataVplane = np.empty((maxSteps, nz, nx))
+    allDataControl = np.empty((maxSteps, nz, nx))
+
+    os.makedirs(workDir, exist_ok=True)
+    os.system(f"sed 's/SAMPLINGHEIGHT/{ycoords}/' {srcDir}bla_macro.i > {workDir}/bla.i")
+    shutil.copy(srcDir + "bla_16x65x16_1", workDir + "bla_16x65x16_1")
+
+    print(f"Launching SIMSON from workdir {workDir}",flush=True)
     mpi_info = MPI.Info.Create()
     mpi_info.Set('wdir',workDir)
     mpi_info.Set('bind_to','none')
@@ -90,7 +96,6 @@ def rollout():
     for plidx in range(1,npl):
         for zidx in range(nz):
             subComm.Recv([field[plidx-1,zidx,:], MPI.DOUBLE], source=0, tag=maxProc+10+plidx+zidx+1)
-
 
     #state = fieldToState(field)
 
@@ -106,17 +111,8 @@ def rollout():
 
     while not done and step < maxSteps:
 
-
-        # Calculating new action
-        if wbci == 6:
-            sys.exit()
-            control = np.ones((nctrlz, nctrlx))
-
-        elif wbci == 7:
-            control = calcControl(nctrlz, nctrlx, step//stepfac, maxv, version)
-            control -= np.mean(control)
-
-
+        control = calcControl(nctrlz, nctrlx, step//stepfac, maxv, version)
+        control -= np.mean(control)
 
         #print(control)
         #print("Python sending control to Fortran")
@@ -148,7 +144,7 @@ def rollout():
         # Distributing the field to compute the individual reward per each agent
         wallStresses = distribute_field(np.expand_dims(uxzAvg,0),agents,nctrlx,nctrlz,partial_reward,reward=True)
 
-        if saveFrqncy > 0 and step % saveFrqncy == 0:
+        if plotFrequency > 0 and step % plotFrequency == 0:
             fieldName = f"{workDir}ux_v{version}_s{step}.png"
             print(f"saving field {fieldName}")
             fig, ax = plt.subplots(1,2)
@@ -157,8 +153,8 @@ def rollout():
             fig.colorbar(c, ax=ax[0])
             c = ax[1].pcolormesh(z, x, field[1,:,:], cmap='RdBu', vmin=field[1,:,:].min(), vmax=field[1,:,:].max())
             fig.colorbar(c, ax=ax[1])
+            plt.tight_layout()
             plt.savefig(fieldName)
-            print("done")
 
             cfieldName = f"{workDir}contol_v{version}_s{step}.png"
             print(f"saving control {cfieldName}")
@@ -168,8 +164,10 @@ def rollout():
             c_max = control.max()
             c = ax.pcolormesh(z, x, control, cmap='RdBu', vmin=c_min, vmax=c_max)
             fig.colorbar(c, ax=ax)
+            plt.axis('scaled')
+            plt.xticks(np.linspace(x.min(), x.max(), 3))
+            plt.yticks(np.linspace(y.min(), y.max(), 3))
             plt.savefig(cfieldName)
-            print("done")
 
             wfieldName = f"{workDir}stress_v{version}_s{step}.png"
             print(f"saving stresses {wfieldName}")
@@ -177,8 +175,10 @@ def rollout():
             x, z = np.meshgrid(np.linspace(0, Lx, nx), np.linspace(0, Lz, nz))
             c = ax.pcolormesh(z, x, uxzAvg, cmap='RdBu', vmin=uxzAvg.min(), vmax=uxzAvg.max())
             fig.colorbar(c, ax=ax)
+            plt.axis('scaled')
+            plt.xticks(np.linspace(x.min(), x.max(), 3))
+            plt.yticks(np.linspace(y.min(), y.max(), 3))
             plt.savefig(wfieldName)
-            print("done")
 
         # Computing wall stresses
         avgStress = 0.
@@ -199,7 +199,6 @@ def rollout():
                 subComm.Recv([field[plidx-1,zidx,:], MPI.DOUBLE], source=0, tag=maxProc+10+plidx+zidx+1)
 
         #state = fieldToState(field)
-
         prevTime = currentTime
         currentTime = np.array(0,dtype=np.double)
         subComm.Recv([currentTime, MPI.DOUBLE], source=0, tag=maxProc+960)
@@ -210,11 +209,10 @@ def rollout():
         allDataUplane[step, :, :] = field[1, :, :]
 
         step = step + 1
-        if (step % 50 == 0):
+        if (step % 100 == 0):
             print(f"Step {step}, t={currentTime:.3f} (dt={(currentTime-prevTime):.3}), avg stress {avgStress:.3f}, stress mean {np.mean(stresses):.3f} sdev {np.std(stresses):.3f}",flush=True)
             print(f"Rewards {avgReward:3f} mean {np.mean(rewards):.3f} sdev {np.std(stresses):.3f}")
             print(f"Max / min control {np.max(control):.3f} {np.min(control):.3f}")
-            print(version)
 
         # Terminate if max simulation time reached
         if currentTime - initTime > 200000:
@@ -234,22 +232,9 @@ def rollout():
     ax[1].plot(stresses, linestyle='--', color='b')
     ax[1].plot(np.cumsum(stresses)/np.arange(1,len(stresses)+1), linestyle='-', color='k')
     ax[1].set_title("Stresses")
+    plt.tight_layout()
     plt.savefig(fName)
-    print("done")
     plt.close('all')
-
-    return np.mean(stresses), np.mean(rewards)
-
-
-    
-if __name__ == "__main__":
-
-    os.makedirs(workDir, exist_ok=True)
-    shutil.copy(srcDir + "bla.i", workDir)
-    shutil.copy(srcDir + "bla_16x65x16_1", workDir)
-    shutil.copy(srcDir + "bla_16x65x16_1_debug", workDir)
-
-    s, r = rollout()
 
     with open(f'{workDir}/control.pickle', 'wb') as f:
         pickle.dump(allDataControl, f)
@@ -260,21 +245,15 @@ if __name__ == "__main__":
     with open(f'{workDir}/fieldV.pickle', 'wb') as f:
         pickle.dump(allDataVplane, f)
 
-
-
     uFlat = np.reshape(allDataUplane,(-1,nz*nx))
     vFlat = np.reshape(allDataVplane,(-1,nz*nx))
 
-    print(uFlat.shape)
-    print(vFlat.shape)
-
     uCov = np.cov(uFlat, rowvar=False)
-    print(uCov.shape)
     #print(np.diagonal(uCov))
 
-    ucovplot = uCov[:16,:16]
+    ucovplot = uCov[:32,:32]
     plt.figure()
-    ax = sns.heatmap(ucovplot, linewidth=0.5, vmax=ucovplot.max(), vmin=ucovplot.min(), cmap='vlag')
+    ax = sns.heatmap(ucovplot, linewidth=0.1, vmax=ucovplot.max(), vmin=ucovplot.min(), cmap='vlag')
     #plt.xticks(np.arange(13)+0.5,['2','3','4','5','6','7','8','9','10','J','Q','K','A'])
     #plt.yticks(np.arange(13)+0.5,['2','3','4','5','6','7','8','9','10','J','Q','K','A'])
     fname = f"{workDir}/uCov.png"
@@ -285,10 +264,8 @@ if __name__ == "__main__":
         pickle.dump(uCov, f)
 
     vCov = np.cov(vFlat, rowvar=False)
-    print(vCov.shape)
-    #print(np.diagonal(vCov))
     
-    vcovplot = vCov[:16,:16]
+    vcovplot = vCov[:32,:32]
 
     plt.figure()
     ax = sns.heatmap(vcovplot, linewidth=0.1, vmax=vcovplot.max(), vmin=vcovplot.min(), cmap='vlag')
@@ -305,13 +282,26 @@ if __name__ == "__main__":
     randV = np.random.multivariate_normal(np.zeros(nz*nx), vCov, Ny)
 
     yU = uFlat + randU
-    print(yU.shape)
-
     yV = vFlat + randV
-    print(yV.shape)
 
     with open(f'{workDir}/dataU.pickle', 'wb') as f:
         pickle.dump(yU, f)
 
     with open(f'{workDir}/dataV.pickle', 'wb') as f:
         pickle.dump(yV, f)
+
+    return np.mean(stresses), np.mean(rewards), allDataControl, allDataVplane, allDataUplane
+
+
+    
+if __name__ == "__main__":
+
+    lower = 0.
+    upper = 100
+    heights = getHeights(lower, upper)
+    heights = heights[1::3]
+    print(heights)
+    print(len(heights))
+    for idx in range(len(heights)):
+        s, r, allDataControl, allDataVplane, allDataUplane = rollout(heights[idx,:])
+        sys.exit()

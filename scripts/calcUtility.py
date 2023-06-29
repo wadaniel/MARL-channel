@@ -83,17 +83,21 @@ if __name__ == "__main__":
     allDataU = allDataUplane.flatten()
     allDataV = allDataVplane.flatten()
 
+    allDataU = allDataU[:100*256]
+    allDataV = allDataV[:100*256]
+    #allDataU = allDataU[:10]
+    #allDataV = allDataV[:10]
+
     print(allDataU.shape)
     print(allDataV.shape)
     stdU = np.std(allDataU)
     stdV = np.std(allDataV)
 
 
-    for i in range(11):
+    for k in range(11):
+    #for k in range(1):
 
-        start = time.time()
-
-        Ny = 2**i
+        Ny = 2**k
         Na = len(allDataU)
 
         allYU = allDataU + np.random.normal(0, stdU, size=(Ny,Na))
@@ -103,6 +107,9 @@ if __name__ == "__main__":
         print(allYV.shape)
 
 
+        start = time.time()
+
+
         utility = 0.
 
         for j in range(Ny):
@@ -110,8 +117,31 @@ if __name__ == "__main__":
                 
                 utility += norm.logpdf(allYU[j,i], allDataU[i], stdU)
 
+                tmp = norm.pdf(allYU[j,i], allDataU[:], stdU)
+                #print(tmp.shape)
+                #print(tmp)
                 innerSum = np.mean(norm.pdf(allYU[j,i], allDataU[:], stdU))
+                #print(innerSum)
                 utility -= np.log(innerSum)
+
+
+        utility /= (Ny*Na)
+
+        end = time.time()
+        print(f'Utility: {utility} (Na={Na}, Ny={Ny})')
+        print(f'Took: {end-start}s')
+
+        start = time.time()
+
+        utility = 0.
+
+        for j in range(Ny):
+            
+            utility += np.sum(norm.logpdf(allYU[j,:], allDataU[:], stdU))
+
+            pdf = lambda mu : norm.pdf(allYU[j,:], mu, stdU)
+            tmp = np.array([pdf(xi) for xi in allDataU])
+            utility -= np.sum(np.log(np.mean(tmp,axis=0)))
 
 
         utility /= (Ny*Na)

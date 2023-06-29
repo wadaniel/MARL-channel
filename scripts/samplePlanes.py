@@ -15,7 +15,9 @@ import seaborn as sns
 launchCommand = './bla_16x65x16_1'
 #launchCommand = './bla_16x65x16_1_debug'
 srcDir = './../bin/'
-workDirTmp = './../dataNew_h'
+#workDirTmp = './../data_h'
+workDirTmp = './../data_base_h' # version 0
+#workDirTmp = './../data1_h' # reduced sampling sdev /3
 maxProc = 1
 
 requestState = b'STATE'
@@ -80,6 +82,7 @@ def rollout(heightTuple):
     allDataUplane = np.empty((maxSteps, nz, nx))
     allDataVplane = np.empty((maxSteps, nz, nx))
     allDataControl = np.empty((maxSteps, nz, nx))
+    allDataStress = np.empty((maxSteps, nz, nx))
 
     os.makedirs(workDir, exist_ok=True)
     os.system(f"sed 's/SAMPLINGHEIGHT/{ycoords}/' {srcDir}bla_macro.i > {workDir}/bla.i")
@@ -218,6 +221,7 @@ def rollout(heightTuple):
         allDataControl[step, :, :] = control
         allDataVplane[step, :, :] = field[0, :, :]
         allDataUplane[step, :, :] = field[1, :, :]
+        allDataStress[step, :, :] = uxzAvg
 
         step = step + 1
         if (step % 250 == 0):
@@ -232,7 +236,6 @@ def rollout(heightTuple):
     print("Python sending terminate message to Fortran")
     subComm.Send([requestTerm, MPI.CHARACTER], dest=0, tag=maxProc+100)
     subComm.Disconnect()
-
 
     fName = f"{workDir}rew_v{version}.png"
     print(f"saving field {fName}")
@@ -255,6 +258,9 @@ def rollout(heightTuple):
 
     with open(f'{workDir}/fieldV.pickle', 'wb') as f:
         pickle.dump(allDataVplane, f)
+
+    with open(f'{workDir}/stress.pickle', 'wb') as f:
+        pickle.dump(uxzAvg, f)
 
     uFlat = np.reshape(allDataUplane,(-1,nz*nx))
     vFlat = np.reshape(allDataVplane,(-1,nz*nx))
@@ -303,16 +309,13 @@ def rollout(heightTuple):
 
     return np.mean(stresses), np.mean(rewards), allDataControl, allDataVplane, allDataUplane
 
-
-    
 if __name__ == "__main__":
 
     lower = 0.
-    upper = 100
+    upper = 50
     heights = getHeights(lower, upper)
-    heights = heights[1::3]
+    #heights = heights[::2]
     print(heights)
     print(len(heights))
     for idx in range(len(heights)):
         s, r, allDataControl, allDataVplane, allDataUplane = rollout(heights[idx,:])
-        sys.exit()

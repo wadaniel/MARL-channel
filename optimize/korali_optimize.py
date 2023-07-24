@@ -2,7 +2,7 @@ import numpy as np
 import os
 import shutil
 from mpi4py import MPI
-from helpers import fieldToState, calcControl, distribute_field
+from helpers import distribute_field
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 launchCommand = './bla_16x65x16_1'
 #launchCommand = './bla_16x65x16_1_debug'
 srcDir = './../bin/'
-workDir = './../run6/'
 maxProc = 1
 
 requestState = b'STATE'
@@ -57,17 +56,22 @@ baseline_dudy_dict = {"180_16x65x16"   : 3.7398798426242075,
 baseline_dudy = baseline_dudy_dict[f"{int(retau)}_{nx}x{ny}x{nz}"]
 
 alpha = 1.0
-maxSteps = 5000
+maxSteps = 3000
 
 saveFrqncy = 500
+printFrqncy = 1000
 
 stepfac = 1
 maxv = 0.04285714285714286
 
-def rollout():
+def rollout(s, workDir):
+  
+    bsdev = s["Parameters"][0]
+    asdev = s["Parameters"][1]
+    amu   = s["Parameters"][2]
 
-    global version
-    print(version)
+    #global version
+    #print(version)
 
     #print(f"Launching SIMSON from workdir {workDir}",flush=True)
     mpi_info = MPI.Info.Create()
@@ -98,21 +102,15 @@ def rollout():
     while not done and step < maxSteps:
 
 
-        # Calculating new opposition control action
-        if wbci == 6:
-            assert(nctrlx == nx)
-            assert(nctrlz == nz)
-
-            control = -field[0,:,:]
-            control -= np.mean(control)
-            sys.exit()
-
-        # Calculating new action
-        elif wbci == 7:
-            control = calcControl(nctrlz, nctrlx, step//stepfac, maxv, version)
-            control -= np.mean(control)
-
+        # Calculating control action
+        sig = asdev*np.abs(field[0,:,:]) + bsdev
+        mu  = amu*field[0,:,:]
+        control = np.random.normal(mu, sig)
+        control = np.clip(control,a_min=-maxv,a_max=maxv)
+        control -= np.mean(control)
         #print(control)
+
+
         #print("Python sending control to Fortran")
         subComm.Send([requestControl, MPI.CHARACTER], dest=0, tag=maxProc+100)
         if ((wbci == 6) or (wbci == 7)):
@@ -142,6 +140,7 @@ def rollout():
         # Distributing the field to compute the individual reward per each agent
         wallStresses = distribute_field(np.expand_dims(uxzAvg,0),agents,nctrlx,nctrlz,partial_reward,reward=True)
 
+        """
         if saveFrqncy > 0 and step % saveFrqncy == 0:
             fieldName = f"{workDir}ux_v{version}_s{step}.png"
             print(f"saving field {fieldName}")
@@ -174,6 +173,7 @@ def rollout():
             plt.savefig(wfieldName)
             print("done")
             plt.close("all")
+        """
 
         # Computing wall stresses
         avgStress = 0.
@@ -200,11 +200,10 @@ def rollout():
         subComm.Recv([currentTime, MPI.DOUBLE], source=0, tag=maxProc+960)
 
         step = step + 1
-        if (step % 50 == 0):
+        if (step % printFrqncy == 0):
             print(f"Step {step}, t={currentTime:.3f} (dt={(currentTime-prevTime):.3}), avg stress {avgStress:.3f}, stress mean {np.mean(stresses):.3f} sdev {np.std(stresses):.3f}",flush=True)
             print(f"Rewards {avgReward:3f} mean {np.mean(rewards):.3f} sdev {np.std(stresses):.3f}")
             print(f"Max / min control {np.max(control):.3f} {np.min(control):.3f}")
-            print(version)
 
         # Terminate if max simulation time reached
         if currentTime - initTime >= 200000:
@@ -215,6 +214,7 @@ def rollout():
     subComm.Disconnect()
 
 
+    """
     fName = f"{workDir}rew_v{version}.png"
     print(f"saving field {fName}")
     fig, ax = plt.subplots(1,2)
@@ -227,31 +227,92 @@ def rollout():
     plt.savefig(fName)
     print("done")
     plt.close('all')
+    """
 
-    return np.mean(stresses), np.mean(rewards)
+    print(f"Params bsdev {bsdev} asdev {asdev} amu {amu}")
+    print(f"Final Reward mean {np.mean(rewards):.3f} sdev {np.std(stresses):.3f}")
+    s["F(x)"] = np.mean(rewards)
 
 
     
 if __name__ == "__main__":
 
-    global version
-    stresses = []
-    rewards = []
+    import argparse
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--maxGenerations',
+        help='Maximum Number of generations to run',
+        default=100,
+        type=int,
+        required=False)    
+    parser.add_argument(
+        '--run',
+        help='Run tag',
+        default=0,
+        type=int,
+        required=False)    
+    parser.add_argument(
+        '--pop',
+        help='Population size',
+        default=8,
+        type=int,
+        required=False)    
+
+    args = parser.parse_args()
+
+    workDir = f'./../cmaes{args.run}/'
     os.makedirs(workDir, exist_ok=True)
     shutil.copy(srcDir + "bla.i", workDir)
     shutil.copy(srcDir + "bla_16x65x16_1", workDir)
     shutil.copy(srcDir + "bla_16x65x16_1_debug", workDir)
 
-    for v in [0,1,2,3,4,5,6]:
-    #for v in [0]:
-        version = v
-        s, r = rollout()
+    # Importing computational model
+    import sys
+    import math
 
-        stresses.append(s)
-        rewards.append(r)
-        print(stresses)
-        print(rewards)
+    # Starting Korali's Engine
+    import korali
+    k = korali.Engine()
 
-    print(stresses)
-    print(rewards)
+    # Creating new experiment
+    e = korali.Experiment()
+
+    # Configuring Problem
+    e["Random Seed"] = 0xC0FEE
+    e["Problem"]["Type"] = "Optimization"
+    e["Problem"]["Objective Function"] = lambda s : rollout(s,workDir)
+
+    # Defining the problem's variables (max/min +/-0.04)
+    e["Variables"][0]["Name"] = "bsdev"
+    e["Variables"][0]["Lower Bound"] = 0.0
+    e["Variables"][0]["Upper Bound"] = 5.0
+    e["Variables"][0]["Initial Mean"] = 0.0
+    e["Variables"][0]["Initial Standard Deviation"] = 0.5
+
+    e["Variables"][1]["Name"] = "asdev"
+    e["Variables"][1]["Lower Bound"] = 0.
+    e["Variables"][1]["Upper Bound"] = 5.
+    e["Variables"][1]["Initial Mean"] = 0.001
+    e["Variables"][1]["Initial Standard Deviation"] = 0.5
+
+    e["Variables"][2]["Name"] = "amu"
+    e["Variables"][2]["Lower Bound"] = -2.
+    e["Variables"][2]["Upper Bound"] = 2.0
+    e["Variables"][2]["Initial Mean"] = 0.001
+    e["Variables"][2]["Initial Standard Deviation"] = 0.5
+
+    # Configuring CMA-ES parameters
+    e["Solver"]["Type"] = "Optimizer/CMAES"
+    e["Solver"]["Population Size"] = args.pop
+    e["Solver"]["Mu Value"] = args.pop//4
+    e["Solver"]["Termination Criteria"]["Min Value Difference Threshold"] = 1e-32
+    e["Solver"]["Termination Criteria"]["Max Generations"] = args.maxGenerations
+
+    # Configuring results path
+    e["File Output"]["Enabled"] = True
+    e["File Output"]["Path"] = f'_korali_result_cmaes_{args.run}'
+    e["File Output"]["Frequency"] = 1
+
+    # Running Korali
+    k.run(e)

@@ -15,8 +15,8 @@ import seaborn as sns
 launchCommand = './bla_16x65x16_1'
 #launchCommand = './bla_16x65x16_1_debug'
 srcDir = './../bin/'
-#workDirTmp = './../data_h'
-workDirTmp = './../data_base_h' # version 0
+#workDirTmp = './../short_data_h'
+workDirTmp = './../plots_data1_h' # version 0
 #workDirTmp = './../data1_h' # reduced sampling sdev /3
 maxProc = 1
 
@@ -64,15 +64,16 @@ baseline_dudy_dict = {"180_16x65x16"   : 3.7398798426242075,
 baseline_dudy = baseline_dudy_dict[f"{int(retau)}_{nx}x{ny}x{nz}"]
 
 seed = 1337
-version = 0
+version = 4
 alpha = 1.0
 
-maxSteps = 1500
-plotFrequency = 500
+#maxSteps = 1500
+maxSteps = 1000 #200
+plotFrequency = 100
 Ny = maxSteps #500 
 
 stepfac = 1
-maxv = 0.04285714285714286
+maxv = 0.04285714285714286/3
 
 def rollout(heightTuple):
 
@@ -156,7 +157,7 @@ def rollout(heightTuple):
             c = ax[0].pcolormesh(z, x, field[1,:,:], cmap='RdBu', vmin=field[1,:,:].min(), vmax=field[1,:,:].max())
             ax[0].set_xticks(np.linspace(z.min(), z.max(), 3), minor=True)
             ax[0].set_yticks(np.linspace(x.min(), x.max(), 3), minor=True)
-            ax[0].set_aspect('equal')
+            #ax[0].set_aspect('equal')
             ax[0].set_title('u')
             fig.colorbar(c, ax=ax[0])
 
@@ -164,10 +165,10 @@ def rollout(heightTuple):
             ax[1].set_xticks(np.linspace(z.min(), z.max(), 3), minor=True)
             ax[1].set_yticks([], minor=True)
             ax[1].set_yticklabels( () )
-            ax[1].set_aspect('equal')
+            #ax[1].set_aspect('equal')
             ax[1].set_title('v')
             fig.colorbar(c, ax=ax[1])
-            plt.tight_layout()
+            #plt.tight_layout()
             plt.savefig(fieldName)
 
             cfieldName = f"{workDir}contol_v{version}_s{step}.png"
@@ -260,7 +261,7 @@ def rollout(heightTuple):
         pickle.dump(allDataVplane, f)
 
     with open(f'{workDir}/stress.pickle', 'wb') as f:
-        pickle.dump(uxzAvg, f)
+        pickle.dump(allDataStress, f)
 
     uFlat = np.reshape(allDataUplane,(-1,nz*nx))
     vFlat = np.reshape(allDataVplane,(-1,nz*nx))
@@ -317,5 +318,6 @@ if __name__ == "__main__":
     #heights = heights[::2]
     print(heights)
     print(len(heights))
+    exit()
     for idx in range(len(heights)):
         s, r, allDataControl, allDataVplane, allDataUplane = rollout(heights[idx,:])

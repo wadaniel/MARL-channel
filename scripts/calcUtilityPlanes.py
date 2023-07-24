@@ -42,7 +42,6 @@ def calcUtility(workDir):
     if os.path.isfile(f'{workDir}/control.pickle') == False:
         print(f'skipping dir {workDir}, control.pickle doesnt exist')
 
-
     with open(f'{workDir}/control.pickle', 'rb') as f:
         allDataControl = pickle.load(f)
 

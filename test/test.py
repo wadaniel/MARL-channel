@@ -56,7 +56,7 @@ if ((wbci == 6) or (wbci == 7)):
 request = b'EVOLV'
 i_evolv = 1
 dy = 1.-np.cos(np.pi*1/(ny-1)) 
-ndrl = 80
+ndrl = 28 #80
 nst = 4
 
 print("Python sending evolve message to Fortran")

@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from multiprocessing import Pool
 
 import numpy as np
-from scipy.stats import norm
+from scipy.stats import norm,pearsonr
 
 nx = 16
 ny = 65
@@ -40,9 +40,8 @@ maxv = 0.04285714285714286
 
 def calcUtilityProxies(workDir):
 
-    #if os.path.isfile(f'{workDir}/stress.pickle') == False:
-    #    print(f'skipping dir {workDir}, stress.pickle doesnt exist')
-    #    return
+    with open(f'{workDir}/stress.pickle', 'rb') as f:
+        allDataStress = pickle.load(f)
 
     with open(f'{workDir}/fieldU.pickle', 'rb') as f:
         allDataUplane = pickle.load(f)
@@ -50,10 +49,13 @@ def calcUtilityProxies(workDir):
     with open(f'{workDir}/fieldV.pickle', 'rb') as f:
         allDataVplane = pickle.load(f)
 
+    allDataStress = allDataStress.flatten()
     allDataU = allDataUplane.flatten()
     allDataV = allDataVplane.flatten()
 
     print(f'data loaded in workdir {workDir}')
+    print(allDataStress.shape)
+    print(allDataUplane.shape)
 
     start = time.time()
     
@@ -63,22 +65,24 @@ def calcUtilityProxies(workDir):
     utilityProxyU2 = np.std(allDataU)/np.abs(np.mean(allDataU))
     utilityProxyV2 = np.std(allDataV)/np.abs(np.mean(allDataV))
 
-    utilityProxyU3 = np.random.normal(size=utilityProxyU1.shape)
-    utilityProxyV3 = np.random.normal(size=utilityProxyV1.shape)
+    utilityProxyU3 = pearsonr(allDataStress, allDataU).statistic
+    utilityProxyV3 = pearsonr(allDataStress, allDataV).statistic
 
     end = time.time()
     print(f'Workdir: {workDir}')
     print(f'Utility Proxy U 1: {utilityProxyU1}')
-    print(f'Utility Proxy V 2: {utilityProxyV1}')
-    print(f'Utility Proxy U 1: {utilityProxyU2}')
+    print(f'Utility Proxy V 1: {utilityProxyV1}')
+    print(f'Utility Proxy U 2: {utilityProxyU2}')
     print(f'Utility Proxy V 2: {utilityProxyV2}')
+    print(f'Utility Proxy U 3: {utilityProxyU3}')
+    print(f'Utility Proxy V 3: {utilityProxyV3}')
+
     print(f'Took: {end-start}s')
     return np.array([[utilityProxyU1, utilityProxyU2, utilityProxyU3],[utilityProxyV1, utilityProxyV2, utilityProxyV3]])
 
-
 if __name__ == "__main__":
 
-    wdir = 'data_base_h'
+    wdir = 'short_data_h'
     allWorkDirs = [d for d in os.listdir('./../') if os.path.isdir(f'./../{d}')]
     allPlaneDirs = [f'./../{d}/' for d in allWorkDirs if wdir in d]
 
@@ -86,6 +90,22 @@ if __name__ == "__main__":
     print(heights)
     print(f'Processing {allPlaneDirs}')
     proxies = np.array([calcUtilityProxies(d) for d in allPlaneDirs])
+
+    tmp = list(zip(heights, proxies[:,0,0]))
+    tmp.sort(key=lambda x: x[0])
+    _, proxiesSorted00 = list(zip(*tmp))
+
+    tmp = list(zip(heights, proxies[:,1,0]))
+    tmp.sort(key=lambda x: x[0])
+    _, proxiesSorted01 = list(zip(*tmp))
+     
+    tmp = list(zip(heights, proxies[:,0,2]))
+    tmp.sort(key=lambda x: x[0])
+    _, proxiesSorted20 = list(zip(*tmp))
+
+    tmp = list(zip(heights, proxies[:,1,2]))
+    tmp.sort(key=lambda x: x[0])
+    _, proxiesSorted21 = list(zip(*tmp))
     
     fName = f'{wdir}_proxy.png'
 
@@ -108,3 +128,8 @@ if __name__ == "__main__":
     plt.savefig(fName)
     plt.close('all')
     print(f'figure {fName} saved!')
+
+    print(proxiesSorted00[:20])
+    print(proxiesSorted01[:20])
+    print(proxiesSorted20[:20])
+    print(proxiesSorted21[:20])

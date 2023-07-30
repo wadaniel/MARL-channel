@@ -3,7 +3,6 @@ from mpi4py import MPI
 from helpers import fieldToState, distribute_field
 
 launchCommand = './bla_16x65x16_1'
-workDir = './../bin/'
 maxProc = 1
 
 requestState = b'STATE'
@@ -21,7 +20,7 @@ nctrlx = 16
 nctrlz = 16
 
 dy = 1.-np.cos(np.pi*1/(ny-1)) 
-ndrl = 80
+ndrl = 28
 nst = 4
 
 rew_mode = 'Instantaneous'
@@ -48,7 +47,7 @@ def env(s, args):
 
     #print(f"Launching SIMSON from workdir {workDir}",flush=True)
     mpi_info = MPI.Info.Create()
-    mpi_info.Set('wdir',workDir)
+    mpi_info.Set('wdir',args.workDir)
     mpi_info.Set('bind_to','none')
     subComm = MPI.COMM_SELF.Spawn(launchCommand,maxprocs=maxProc,info=mpi_info)
 
@@ -71,7 +70,7 @@ def env(s, args):
     subComm.Recv([initTime, MPI.DOUBLE], source=0, tag=maxProc+960)
     currentTime = initTime
 
-    while not done and step < args.episodelength:
+    while not done and step < args.episodeLength:
 
         # Getting new action from korali
         s.update()
@@ -145,4 +144,3 @@ def env(s, args):
     print("Python sending terminate message to Fortran")
     subComm.Send([requestTerm, MPI.CHARACTER], dest=0, tag=maxProc+100)
     subComm.Disconnect()
-

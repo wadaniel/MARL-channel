@@ -18,7 +18,7 @@ def distribute_field(field,agents,nctrlx,nctrlz,partial_reward,reward=True):
     return distributed_fields
 
 
-def calcControl(nctrlz, nctrlx, step, maxv, version, seed=-1):
+def calcControl(nctrlz, nctrlx, step, maxv, field, version, seed=-1):
     control = np.zeros((nctrlz, nctrlx))
     if seed > 0:
         np.random.seed(seed)
@@ -63,8 +63,17 @@ def calcControl(nctrlz, nctrlx, step, maxv, version, seed=-1):
     # Random up/down
     elif version == 6:
         control = np.random.uniform(low=-1, high=1., size=(nctrlz, nctrlx))
-        control[control>0] = maxv
-        control[control<=0] = -maxv
+
+    # Lin policy
+    elif version == 7:
+
+        asdev = 3.973121378631374
+        bsdev = 2.1477481504209806
+        amu = -1.7192057786054982
+        
+        sig = np.clip(asdev*np.abs(field) + bsdev, a_min=0.01, a_max=999)
+        mu  = amu*field
+        control = np.random.normal(mu, sig)
 
     else:
         print("[helpers] control version not recognized")

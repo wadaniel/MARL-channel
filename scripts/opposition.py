@@ -10,13 +10,15 @@ import matplotlib.pyplot as plt
 launchCommand = './bla_16x65x16_1'
 #launchCommand = './bla_16x65x16_1_debug'
 srcDir = './../bin/'
-workDir = './../run6/'
+workDir = './../run2/'
 maxProc = 1
 
 requestState = b'STATE'
 requestControl = b'CNTRL'
 requestEvolve = b'EVOLV'
 requestTerm = b'TERMN'
+
+seed=1337
 
 nx = 16
 ny = 65
@@ -57,7 +59,8 @@ baseline_dudy_dict = {"180_16x65x16"   : 3.7398798426242075,
 baseline_dudy = baseline_dudy_dict[f"{int(retau)}_{nx}x{ny}x{nz}"]
 
 alpha = 1.0
-maxSteps = 5000
+#maxSteps = 5000
+maxSteps = 3000
 
 saveFrqncy = 500
 
@@ -68,6 +71,7 @@ def rollout():
 
     global version
     print(version)
+    np.random.seed(seed)
 
     #print(f"Launching SIMSON from workdir {workDir}",flush=True)
     mpi_info = MPI.Info.Create()
@@ -109,7 +113,8 @@ def rollout():
 
         # Calculating new action
         elif wbci == 7:
-            control = calcControl(nctrlz, nctrlx, step//stepfac, maxv, version)
+            control = calcControl(nctrlz, nctrlx, step//stepfac, maxv, field[0,:,:], version)
+            control = np.clip(control,a_min=-maxv,a_max=maxv)
             control -= np.mean(control)
 
         #print(control)
@@ -221,9 +226,11 @@ def rollout():
     ax[0].plot(rewards, linestyle='--', color='b')
     ax[0].plot(np.cumsum(rewards)/np.arange(1,len(stresses)+1), linestyle='-', color='k')
     ax[0].set_title("Rewards")
+    ax[0].set_ylim([-0.15, 0.3])
     ax[1].plot(stresses, linestyle='--', color='b')
     ax[1].plot(np.cumsum(stresses)/np.arange(1,len(stresses)+1), linestyle='-', color='k')
     ax[1].set_title("Stresses")
+    ax[1].set_ylim([2.5, 4.0])
     plt.savefig(fName)
     print("done")
     plt.close('all')
@@ -243,8 +250,8 @@ if __name__ == "__main__":
     shutil.copy(srcDir + "bla_16x65x16_1", workDir)
     shutil.copy(srcDir + "bla_16x65x16_1_debug", workDir)
 
-    for v in [0,1,2,3,4,5,6]:
-    #for v in [0]:
+    for v in [0,1,2,3,4,5,6,7]:
+    #for v in [7]:
         version = v
         s, r = rollout()
 

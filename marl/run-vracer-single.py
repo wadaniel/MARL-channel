@@ -72,7 +72,7 @@ parser.add_argument(
 
 
 args = parser.parse_args()
-args.workDir = f"./_korali_vracer_single_{args.run}/"
+args.workDir = "./../bin" #f"./_korali_vracer_single_{args.run}/"
 
 print("Running Flow control with arguments:")
 print(args)
@@ -149,6 +149,7 @@ e["File Output"]["Enabled"] = True
 e["File Output"]["Use Multiple Files"] = False
 e["File Output"]["Frequency"] = 10
 e["File Output"]["Path"] = args.workDir
+e["Console Output"]["Verbosity"] = "Detailed"
 
 ###  Configuring the distributed conduit
 
@@ -159,11 +160,11 @@ if args.concurrentWorkers > 1:
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
-if rank == 0:
-    print(f'[korali_optimize] rank 0 copying files to {args.workDir}')
-    os.makedirs(args.workDir, exist_ok=True)
-    shutil.copy(srcDir + "bla.i", args.workDir)
-    shutil.copy(srcDir + "bla_16x65x16_1", args.workDir)
+#if rank == 0:
+    #print(f'[korali_optimize] rank 0 copying files to {args.workDir}')
+    #os.makedirs(args.workDir, exist_ok=True)
+    #shutil.copy(srcDir + "bla.i", args.workDir)
+    #shutil.copy(srcDir + "bla_16x65x16_1", args.workDir)
 MPI.COMM_WORLD.Barrier()
 
 

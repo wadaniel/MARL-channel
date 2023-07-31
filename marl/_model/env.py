@@ -1,3 +1,4 @@
+import time
 import numpy as np
 from mpi4py import MPI
 from helpers import fieldToState, distribute_field
@@ -34,6 +35,7 @@ nzs_ = 1
 xchange = 1
 zchange = 1
 
+printFrequency = 1000
 # Load the reference average du/dy at the wall to use as baseline (for wbci 6 or 7)
 opposition_dudy_dict = {"180_16x65x16"   : 3.7398798426242075,
                       "180_32x33x32"   : 3.909412638928125,
@@ -45,10 +47,16 @@ baseline_dudy = opposition_dudy_dict[f"{int(retau)}_{nx}x{ny}x{nz}"]
 
 def env(s, args):
 
-    #print(f"Launching SIMSON from workdir {workDir}",flush=True)
+    start = time.time()
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+    size = comm.Get_size()-1
+
     mpi_info = MPI.Info.Create()
     mpi_info.Set('wdir',args.workDir)
     mpi_info.Set('bind_to','none')
+
+    print(f"[env] Python rank {rank}/{size} sending launch message to Fortran")
     subComm = MPI.COMM_SELF.Spawn(launchCommand,maxprocs=maxProc,info=mpi_info)
 
     #print("Python receiving state from Fortran", flush=True)
@@ -133,14 +141,19 @@ def env(s, args):
         subComm.Recv([currentTime, MPI.DOUBLE], source=0, tag=maxProc+960)
 
         step = step + 1
-        if (step % 100 == 0):
-            print(f"Step {step}, t={currentTime} (dt={(currentTime-prevTime):.3}), reward {reward:.3f}, reward mean {(cumReward/step):.3f}",flush=True)
+        """
+        if (step % printFrequency == 0):
+            print(f"[env] Step {step}, t={currentTime} (dt={(currentTime-prevTime):.3}), reward {reward:.3f}, reward mean {(cumReward/step):.3f}",flush=True)
+        """
 
         # Terminate if max simulation time reached
         if currentTime - initTime > 200000:
             done = True
 
     s["Termination"] = "Terminal"
-    print("Python sending terminate message to Fortran")
+    print(f"[env] Python rank {rank}/{size} sending terminate message to Fortran")
     subComm.Send([requestTerm, MPI.CHARACTER], dest=0, tag=maxProc+100)
     subComm.Disconnect()
+    
+    end = time.time()
+    print(f"[env] Cumulative reward rank {rank}/{size}: {cumReward}, Took {end-start}s")

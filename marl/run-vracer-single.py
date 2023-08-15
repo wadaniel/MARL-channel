@@ -69,6 +69,11 @@ parser.add_argument(
     default=0,
     type=int,
     required=False)
+parser.add_argument(
+    '--test',
+    help='Eval policy',
+    action='store_true',
+    required=False)
 
 
 args = parser.parse_args()
@@ -85,6 +90,10 @@ srcDir = './../bin/'
 import korali
 k = korali.Engine()
 e = korali.Experiment()
+
+found = e.loadState(args.resDir + '/latest')
+if found == True:
+    print("[Korali] Continuing execution from previous run...\n")
 
 ### Defining the Cartpole problem's configuration
 e["Problem"]["Type"] = "Reinforcement Learning / Continuous"
@@ -110,11 +119,12 @@ e["Solver"]["Type"] = "Agent / Continuous / VRACER"
 e["Solver"]["Mode"] = "Training"
 e["Solver"]["Experiences Between Policy Updates"] = 1
 e["Solver"]["Episodes Per Generation"] = args.concurrentWorkers
-e["Solver"]["Concurrent Workers"] = args.concurrentWorkers
+e["Solver"]["Concurrent Workers"] = 1
 
 e["Solver"]["Experience Replay"]["Start Size"] = 5*args.episodeLength*args.concurrentWorkers #131072
 e["Solver"]["Experience Replay"]["Maximum Size"] = 524288
-e["Solver"]["Experience Replay"]["Off Policy"]["REFER Beta"]= 0.3
+e["Solver"]["Experience Replay"]["Off Policy"]["REFER Beta"] = 0.3
+e["Solver"]["Experience Replay"]["Serialize"] = False
 
 e["Solver"]["Discount Factor"] = 0.995
 e["Solver"]["Learning Rate"] = args.learningRate
@@ -126,7 +136,8 @@ e["Solver"]["Reward"]["Rescaling"]["Enabled"] = True
 
 e["Solver"]["Neural Network"]["Engine"] = "OneDNN"
 e["Solver"]["Neural Network"]["Optimizer"] = "Adam"
-e["Solver"]["Policy"]["Distribution"] = "Clipped Normal"
+#e["Solver"]["Policy"]["Distribution"] = "Clipped Normal"
+e["Solver"]["Policy"]["Distribution"] = "Normal"
 
 e["Solver"]["Neural Network"]["Hidden Layers"][0]["Type"] = "Layer/Linear"
 e["Solver"]["Neural Network"]["Hidden Layers"][0]["Output Channels"] = 128
@@ -148,26 +159,35 @@ e["Solver"]["Termination Criteria"]["Max Experiences"] = args.maxExperiences
 
 e["File Output"]["Enabled"] = True
 e["File Output"]["Use Multiple Files"] = False
-e["File Output"]["Frequency"] = 10
+e["File Output"]["Frequency"] = 50
 e["File Output"]["Path"] = args.resDir
 e["Console Output"]["Verbosity"] = "Detailed"
 
 ###  Configuring the distributed conduit
 
-if args.concurrentWorkers > 1:
+rank = 0
+if args.test:
+    e["Solver"]["Mode"] = "Testing"
+    e["Solver"]["Testing"]["Sample Ids"] = [0]
+
+elif args.concurrentWorkers > 1:
+    e["Solver"]["Concurrent Workers"] = args.concurrentWorkers
+
     k.setMPIComm(MPI.COMM_WORLD)
     k["Conduit"]["Type"] = "Distributed"
     k["Conduit"]["Ranks Per Worker"] = 1
 
-comm = MPI.COMM_WORLD
-rank = comm.Get_rank()
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+
 if rank == 0:
     print(f'[korali_optimize] rank 0 copying files to {args.resDir}')
     os.makedirs(args.resDir, exist_ok=True)
     shutil.copy(srcDir + "bla.i", args.resDir)
     shutil.copy(srcDir + "bla_16x65x16_1", args.resDir)
-MPI.COMM_WORLD.Barrier()
 
+if args.concurrentWorkers > 1:
+    MPI.COMM_WORLD.Barrier()
 
 ### Running Experiment
 

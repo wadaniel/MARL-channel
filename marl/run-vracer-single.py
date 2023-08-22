@@ -159,7 +159,7 @@ e["Solver"]["Termination Criteria"]["Max Experiences"] = args.maxExperiences
 
 e["File Output"]["Enabled"] = True
 e["File Output"]["Use Multiple Files"] = False
-e["File Output"]["Frequency"] = 50
+e["File Output"]["Frequency"] = 20
 e["File Output"]["Path"] = args.resDir
 e["Console Output"]["Verbosity"] = "Detailed"
 

@@ -64,8 +64,12 @@ def calcControl(nctrlz, nctrlx, step, maxv, field, version, seed=-1):
     elif version == 6:
         control = np.random.uniform(low=-1, high=1., size=(nctrlz, nctrlx))
 
-    # Lin policy
+    # Opposition
     elif version == 7:
+        control = -field[:,:]
+
+    # Lin policy
+    elif version == 8:
 
         asdev = 3.973121378631374
         bsdev = 2.1477481504209806

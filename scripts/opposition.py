@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import shutil
+import pickle
 from mpi4py import MPI
 from helpers import fieldToState, calcControl, distribute_field
 import matplotlib
@@ -10,7 +11,7 @@ import matplotlib.pyplot as plt
 launchCommand = './bla_16x65x16_1'
 #launchCommand = './bla_16x65x16_1_debug'
 srcDir = './../bin/'
-workDir = './../runOpposition/'
+workDir = './../runOpposition3000/'
 maxProc = 1
 
 requestState = b'STATE'
@@ -61,6 +62,7 @@ baseline_dudy = baseline_dudy_dict[f"{int(retau)}_{nx}x{ny}x{nz}"]
 alpha = 1.0
 #maxSteps = 5000
 maxSteps = 3000
+#maxSteps = 500 #3000
 
 saveFrqncy = 500
 
@@ -272,8 +274,8 @@ if __name__ == "__main__":
     shutil.copy(srcDir + "bla_16x65x16_1", workDir)
     shutil.copy(srcDir + "bla_16x65x16_1_debug", workDir)
 
-    for v in [0,1,2,3,4,5,6,7]:
-    #for v in [7]:
+    versions = [0,1,2,3,4,5,6,7,8]
+    for v in versions:
         version = v
         s, r = rollout()
 

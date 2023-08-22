@@ -133,7 +133,7 @@ def env(s, args):
                 #uxzAvg = (uxzAvg*i_evolv + uxz.astype(float)/dy)/(i_evolv+1)
                 i_evolv += 1
 
-            uxzAvg /= ((i_evolv-1)*dy)
+            uxzAvg /= (i_evolv*dy)
 
             # Distributing the field to compute the individual reward per each agent
             wallStresses = distribute_field(np.expand_dims(uxzAvg,0),agents,nctrlx,nctrlz,partial_reward,reward=True)

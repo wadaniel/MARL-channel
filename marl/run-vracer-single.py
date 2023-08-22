@@ -118,7 +118,7 @@ for a in range(nState, nState+args.nctrlx*args.nctrlz):
     e["Variables"][a]["Type"] = "Action"
     e["Variables"][a]["Lower Bound"] = -maxv
     e["Variables"][a]["Upper Bound"] = +maxv
-    e["Variables"][a]["Initial Exploration Noise"] = 1.3*maxv
+    e["Variables"][a]["Initial Exploration Noise"] = 2.*maxv
 
 ### Defining Agent Configuration 
 
@@ -126,9 +126,9 @@ e["Solver"]["Type"] = "Agent / Continuous / VRACER"
 e["Solver"]["Mode"] = "Training"
 e["Solver"]["Experiences Between Policy Updates"] = 1
 e["Solver"]["Episodes Per Generation"] = args.concurrentWorkers
-e["Solver"]["Concurrent Workers"] = 1
+e["Solver"]["Concurrent Workers"] = 1 # set below
 
-e["Solver"]["Experience Replay"]["Start Size"] = 5*args.episodeLength*args.concurrentWorkers #131072
+e["Solver"]["Experience Replay"]["Start Size"] = 32768 #100*args.episodeLength #131072
 e["Solver"]["Experience Replay"]["Maximum Size"] = 524288
 e["Solver"]["Experience Replay"]["Off Policy"]["REFER Beta"] = 0.3
 e["Solver"]["Experience Replay"]["Serialize"] = True

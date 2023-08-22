@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 launchCommand = './bla_16x65x16_1'
 #launchCommand = './bla_16x65x16_1_debug'
 srcDir = './../bin/'
-workDir = './../run2/'
+workDir = './../runOpposition/'
 maxProc = 1
 
 requestState = b'STATE'
@@ -72,6 +72,11 @@ def rollout():
     global version
     print(version)
     np.random.seed(seed)
+
+    allDataUplane = np.empty((maxSteps, nz, nx))
+    allDataVplane = np.empty((maxSteps, nz, nx))
+    allDataControl = np.empty((maxSteps, nz, nx))
+    allDataStress = np.empty((maxSteps, nz, nx))
 
     #print(f"Launching SIMSON from workdir {workDir}",flush=True)
     mpi_info = MPI.Info.Create()
@@ -199,10 +204,15 @@ def rollout():
                 subComm.Recv([field[plidx-1,zidx,:], MPI.DOUBLE], source=0, tag=maxProc+10+plidx+zidx+1)
 
         #state = fieldToState(field)
-
         prevTime = currentTime
         currentTime = np.array(0,dtype=np.double)
         subComm.Recv([currentTime, MPI.DOUBLE], source=0, tag=maxProc+960)
+
+        # store data
+        allDataControl[step, :, :] = control
+        allDataVplane[step, :, :] = field[0, :, :]
+        allDataUplane[step, :, :] = field[1, :, :]
+        allDataStress[step, :, :] = uxzAvg
 
         step = step + 1
         if (step % 50 == 0):
@@ -234,9 +244,21 @@ def rollout():
     plt.savefig(fName)
     print("done")
     plt.close('all')
+    
+    # write data
+    with open(f'{workDir}/control_v{version}.pickle', 'wb') as f:
+        pickle.dump(allDataControl, f)
+
+    with open(f'{workDir}/fieldU_v{version}.pickle', 'wb') as f:
+        pickle.dump(allDataUplane, f)
+
+    with open(f'{workDir}/fieldV_v{version}.pickle', 'wb') as f:
+        pickle.dump(allDataVplane, f)
+
+    with open(f'{workDir}/stress_v{version}.pickle', 'wb') as f:
+        pickle.dump(allDataStress, f)
 
     return np.mean(stresses), np.mean(rewards)
-
 
     
 if __name__ == "__main__":

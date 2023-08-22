@@ -1,7 +1,12 @@
 import time
 import numpy as np
+import pickle
 from mpi4py import MPI
 from helpers import fieldToState, distribute_field
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
 
 launchCommand = './bla_16x65x16_1'
 maxProc = 1
@@ -29,6 +34,10 @@ rew_mode = 'Instantaneous'
 partial_reward = False
 agents = [f"jet_z{zi}_x{xi}" for xi in range(nctrlx) for zi in range(nctrlz)]
 
+h=1.
+Lx = 2.67*h
+Lz = 0.8*h
+
 retau = 180
 nxs_ = 1
 nzs_ = 1
@@ -43,8 +52,10 @@ opposition_dudy_dict = {"180_16x65x16"   : 3.7398798426242075,
                       "180_64x65x64"   : 3.82829465265046,
                       "180_128x65x128" : 3.82829465265046}
 
-version = 9 # V-RACER tag for plotting
 baseline_dudy = opposition_dudy_dict[f"{int(retau)}_{nx}x{ny}x{nz}"]
+
+version = 9 # V-RACER tag for plotting
+saveFrqncy = 500
 
 def env(s, args):
 
@@ -150,18 +161,52 @@ def env(s, args):
             currentTime = np.array(0,dtype=np.double)
             subComm.Recv([currentTime, MPI.DOUBLE], source=0, tag=maxProc+960)
 
-            # store data
-            if args.test:
-                allDataControl[step, :, :] = control
-                allDataVplane[step, :, :] = field[0, :, :]
-                allDataUplane[step, :, :] = field[1, :, :]
-                allDataStress[step, :, :] = uxzAvg
-
             step = step + 1
 
-            # console output
-            if (args.test and step % printFrequency == 0):
-                print(f"[env] Step {step}, t={currentTime} (dt={(currentTime-prevTime):.3}), reward {reward:.3f}, reward mean {(cumReward/step):.3f}",flush=True)
+            # store data
+            if args.test:
+                allDataControl[step-1, :, :] = control
+                allDataVplane[step-1, :, :] = field[0, :, :]
+                allDataUplane[step-1, :, :] = field[1, :, :]
+                allDataStress[step-1, :, :] = uxzAvg
+
+                # console output
+                if saveFrqncy > 0 and step % saveFrqncy == 0:
+                    fieldName = f"{args.workDir}/ux_v{version}_s{step}.png"
+                    print(f"[env] saving field {fieldName}")
+                    fig, ax = plt.subplots(1,2)
+                    x, z = np.meshgrid(np.linspace(0, Lx, nx), np.linspace(0, Lz, nz))
+                    c = ax[0].pcolormesh(z, x, field[0,:,:], cmap='RdBu', vmin=field[0,:,:].min(), vmax=field[0,:,:].max())
+                    fig.colorbar(c, ax=ax[0])
+                    c = ax[1].pcolormesh(z, x, field[1,:,:], cmap='RdBu', vmin=field[1,:,:].min(), vmax=field[1,:,:].max())
+                    fig.colorbar(c, ax=ax[1])
+                    plt.savefig(fieldName)
+                    print("[env] done")
+
+                    cfieldName = f"{args.workDir}/contol_v{version}_s{step}.png"
+                    print(f"[env] saving control {cfieldName}")
+                    fig, ax = plt.subplots()
+                    x, z = np.meshgrid(np.linspace(0, Lx, nx), np.linspace(0, Lz, nz))
+                    c_min = control.min()
+                    c_max = control.max()
+                    c = ax.pcolormesh(z, x, control, cmap='RdBu', vmin=c_min, vmax=c_max)
+                    fig.colorbar(c, ax=ax)
+                    plt.savefig(cfieldName)
+                    print("[env] done")
+
+                    wfieldName = f"{args.workDir}/stress_v{version}_s{step}.png"
+                    print(f"[env] saving stresses {wfieldName}")
+                    fig, ax = plt.subplots()
+                    x, z = np.meshgrid(np.linspace(0, Lx, nx), np.linspace(0, Lz, nz))
+                    c = ax.pcolormesh(z, x, uxzAvg, cmap='RdBu', vmin=uxzAvg.min(), vmax=uxzAvg.max())
+                    fig.colorbar(c, ax=ax)
+                    plt.savefig(wfieldName)
+                    print("[env] done")
+                    plt.close("all")
+
+                # console output
+                if (step % printFrequency == 0):
+                    print(f"[env] Step {step}, t={currentTime} (dt={(currentTime-prevTime):.3}), reward {reward:.3f}, reward mean {(cumReward/step):.3f}",flush=True)
 
             # Terminate if max simulation time reached
             if currentTime - initTime > 200000:

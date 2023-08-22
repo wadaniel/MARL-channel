@@ -20,6 +20,12 @@ parser.add_argument(
     help='Length of sim in steps',
     default=500,
     type=int,
+    required=False)
+parser.add_argument(
+    '--pol',
+    help='Policy type (Normal, Clipped Normal, ..)',
+    default="Clipped Normal",
+    type=str,
     required=False)    
 parser.add_argument(
     '--learningRate',
@@ -137,7 +143,7 @@ e["Solver"]["Reward"]["Rescaling"]["Enabled"] = True
 
 e["Solver"]["Neural Network"]["Engine"] = "OneDNN"
 e["Solver"]["Neural Network"]["Optimizer"] = "Adam"
-e["Solver"]["Policy"]["Distribution"] = "Clipped Normal"
+e["Solver"]["Policy"]["Distribution"] = args.pol
 #e["Solver"]["Policy"]["Distribution"] = "Normal"
 
 e["Solver"]["Neural Network"]["Hidden Layers"][0]["Type"] = "Layer/Linear"

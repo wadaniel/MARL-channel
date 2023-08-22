@@ -2,13 +2,15 @@ import pickle
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from matplotlib import cm
+from helpers import versionNames
 
 import numpy as np
 
 workDir = './../runOpposition/'
 
 def loadData(workdir, version):
-    file = open(f'{workDir}/control_v{version}.pickle', 'rb')
+    file = open(f'{workDir}control_v{version}.pickle', 'rb')
     allDataControl = pickle.load(file)
     file.close()
     controlA = allDataControl[:,0,0]
@@ -23,12 +25,16 @@ def loadData(workdir, version):
     
     return controlA, controlB, controlC, controlD, stress
 
+def get_color_from_colormap(value, colormap_name='viridis'):
+    colormap = cm.get_cmap(colormap_name)
+    color = colormap(value)
+    return color
+
 
 if __name__ == "__main__":
 
     versions = [0,1,2,3,4,5,6,7,8]
     stresses = []
-
 
     for v in versions:
         controlA, controlB, controlC, controlD, _ = loadData(workDir, v)
@@ -61,12 +67,14 @@ if __name__ == "__main__":
         plt.savefig(fName)
         print(f'figure {fName} saved!')
 
-    fName = f'{workdir}/stresses.pdf'
+    fName = f'{workDir}stresses.pdf'
+    cmap = plt.get_cmap('tab10')
     fig, ax = plt.subplots(1,1)
 
     for v in versions:
         _, _, _, _, stress = loadData(workDir, v)
-        ax.plot(np.arange(T), stress, linestyle='-', lw=1, label=f'v{v}')
+        color = get_color_from_colormap(v/max(versions), 'tab10')
+        ax.plot(np.arange(T), stress, linestyle='-', lw=1, label=f'{versionNames[v]}', color=color)
  
     ax.legend()
     plt.tight_layout()

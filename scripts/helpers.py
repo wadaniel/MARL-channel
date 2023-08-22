@@ -17,6 +17,16 @@ def distribute_field(field,agents,nctrlx,nctrlz,partial_reward,reward=True):
     
     return distributed_fields
 
+versionNames = { 0 : 'no control',
+                 1 : 'striped z',
+                 2 : 'stripe x',
+                 3 : 'checkerboard',
+                 4 : 'random normal',
+                 5 : 'random uniform',
+                 6 : 'random binomial',
+                 7 : 'oppposition control',
+                 8 : 'random normal optimized',
+                 9 : 'V-RACER policy' }
 
 def calcControl(nctrlz, nctrlx, step, maxv, field, version, seed=-1):
     control = np.zeros((nctrlz, nctrlx))
@@ -60,9 +70,11 @@ def calcControl(nctrlz, nctrlx, step, maxv, field, version, seed=-1):
     elif version == 5:
         control = np.random.uniform(low=-maxv, high=maxv, size=(nctrlz, nctrlx))
 
-    # Random up/down
+    # Random up/down (binomial)
     elif version == 6:
         control = np.random.uniform(low=-1, high=1., size=(nctrlz, nctrlx))
+        control[control<0] = -maxv
+        control[control>=0] = maxv
 
     # Opposition
     elif version == 7:

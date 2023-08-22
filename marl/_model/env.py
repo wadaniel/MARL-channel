@@ -43,6 +43,7 @@ opposition_dudy_dict = {"180_16x65x16"   : 3.7398798426242075,
                       "180_64x65x64"   : 3.82829465265046,
                       "180_128x65x128" : 3.82829465265046}
 
+version = 9 # V-RACER tag for plotting
 baseline_dudy = opposition_dudy_dict[f"{int(retau)}_{nx}x{ny}x{nz}"]
 
 def env(s, args):
@@ -59,6 +60,12 @@ def env(s, args):
 
     print(f"[env] Python rank {rank}/{size} sending launch message to Fortran")
     subComm = MPI.COMM_SELF.Spawn(launchCommand,maxprocs=maxProc,info=mpi_info)
+
+    if args.test:
+        allDataUplane = np.empty((args.episodeLength, nz, nx))
+        allDataVplane = np.empty((args.episodeLength, nz, nx))
+        allDataControl = np.empty((args.episodeLength, nz, nx))
+        allDataStress = np.empty((args.episodeLength, nz, nx))
 
     try:
 
@@ -143,7 +150,16 @@ def env(s, args):
             currentTime = np.array(0,dtype=np.double)
             subComm.Recv([currentTime, MPI.DOUBLE], source=0, tag=maxProc+960)
 
+            # store data
+            if args.test:
+                allDataControl[step, :, :] = control
+                allDataVplane[step, :, :] = field[0, :, :]
+                allDataUplane[step, :, :] = field[1, :, :]
+                allDataStress[step, :, :] = uxzAvg
+
             step = step + 1
+
+            # console output
             if (args.test and step % printFrequency == 0):
                 print(f"[env] Step {step}, t={currentTime} (dt={(currentTime-prevTime):.3}), reward {reward:.3f}, reward mean {(cumReward/step):.3f}",flush=True)
 
@@ -153,6 +169,20 @@ def env(s, args):
 
         s["Termination"] = "Terminal"
      
+        # write data
+        if args.test:
+            with open(f'{args.workDir}/control_v{version}.pickle', 'wb') as f:
+                pickle.dump(allDataControl, f)
+
+            with open(f'{args.workDir}/fieldU_v{version}.pickle', 'wb') as f:
+                pickle.dump(allDataUplane, f)
+
+            with open(f'{args.workDir}/fieldV_v{version}.pickle', 'wb') as f:
+                pickle.dump(allDataVplane, f)
+
+            with open(f'{args.workDir}/stress_v{version}.pickle', 'wb') as f:
+                pickle.dump(allDataStress, f)
+
     except Exception as e:
 
         print(f"Exception occured {e}")

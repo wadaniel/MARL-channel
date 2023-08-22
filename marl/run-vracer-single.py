@@ -101,6 +101,7 @@ e["Problem"]["Environment Function"] = lambda s : env(s, args)
 e["Problem"]["Testing Frequency"] = 10
 e["Problem"]["Policy Testing Episodes"] = 1
 
+maxv = 0.04285714285714286
 nState = 2*args.nx*args.nz//(args.compression**2)
 for i in range(nState):
     e["Variables"][i]["Name"] = "Sensor No. " + str(i)
@@ -109,9 +110,9 @@ for i in range(nState):
 for a in range(nState, nState+args.nctrlx*args.nctrlz):
     e["Variables"][a]["Name"] = "Contro No. " + str(a)
     e["Variables"][a]["Type"] = "Action"
-    e["Variables"][a]["Lower Bound"] = -0.04285714285714286
-    e["Variables"][a]["Upper Bound"] = +0.04285714285714286
-    e["Variables"][a]["Initial Exploration Noise"] = 0.05
+    e["Variables"][a]["Lower Bound"] = -maxv
+    e["Variables"][a]["Upper Bound"] = +maxv
+    e["Variables"][a]["Initial Exploration Noise"] = 1.3*maxv
 
 ### Defining Agent Configuration 
 
@@ -124,7 +125,7 @@ e["Solver"]["Concurrent Workers"] = 1
 e["Solver"]["Experience Replay"]["Start Size"] = 5*args.episodeLength*args.concurrentWorkers #131072
 e["Solver"]["Experience Replay"]["Maximum Size"] = 524288
 e["Solver"]["Experience Replay"]["Off Policy"]["REFER Beta"] = 0.3
-e["Solver"]["Experience Replay"]["Serialize"] = False
+e["Solver"]["Experience Replay"]["Serialize"] = True
 
 e["Solver"]["Discount Factor"] = 0.995
 e["Solver"]["Learning Rate"] = args.learningRate
@@ -136,8 +137,8 @@ e["Solver"]["Reward"]["Rescaling"]["Enabled"] = True
 
 e["Solver"]["Neural Network"]["Engine"] = "OneDNN"
 e["Solver"]["Neural Network"]["Optimizer"] = "Adam"
-#e["Solver"]["Policy"]["Distribution"] = "Clipped Normal"
-e["Solver"]["Policy"]["Distribution"] = "Normal"
+e["Solver"]["Policy"]["Distribution"] = "Clipped Normal"
+#e["Solver"]["Policy"]["Distribution"] = "Normal"
 
 e["Solver"]["Neural Network"]["Hidden Layers"][0]["Type"] = "Layer/Linear"
 e["Solver"]["Neural Network"]["Hidden Layers"][0]["Output Channels"] = 128

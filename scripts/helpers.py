@@ -23,7 +23,7 @@ versionNames = { 0 : 'no control',
                  3 : 'checkerboard',
                  4 : 'random normal',
                  5 : 'random uniform',
-                 6 : 'random binomial',
+                 6 : 'random Bernoulli',
                  7 : 'oppposition control',
                  8 : 'random normal optimized',
                  9 : 'V-RACER policy' }

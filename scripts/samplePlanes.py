@@ -318,6 +318,5 @@ if __name__ == "__main__":
     #heights = heights[::2]
     print(heights)
     print(len(heights))
-    exit()
     for idx in range(len(heights)):
         s, r, allDataControl, allDataVplane, allDataUplane = rollout(heights[idx,:])

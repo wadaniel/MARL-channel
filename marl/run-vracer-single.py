@@ -85,6 +85,8 @@ parser.add_argument(
 args = parser.parse_args()
 args.workDir = "./../bin" #f"./_korali_vracer_single_{args.run}/"
 args.resDir = f"./_korali_vracer_single_{args.run}/"
+args.nagx = 1
+args.nagz = 1
 
 print("Running Flow control with arguments:")
 print(args)
@@ -131,7 +133,7 @@ e["Solver"]["Concurrent Workers"] = 1 # set below
 e["Solver"]["Experience Replay"]["Start Size"] = 32768 #100*args.episodeLength #131072
 e["Solver"]["Experience Replay"]["Maximum Size"] = 524288
 e["Solver"]["Experience Replay"]["Off Policy"]["REFER Beta"] = 0.3
-e["Solver"]["Experience Replay"]["Serialize"] = True
+e["Solver"]["Experience Replay"]["Serialize"] = False
 
 e["Solver"]["Discount Factor"] = 0.995
 e["Solver"]["Learning Rate"] = args.learningRate

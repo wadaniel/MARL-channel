@@ -2,7 +2,7 @@ import time
 import numpy as np
 import pickle
 from mpi4py import MPI
-from helpers import fieldToState, distribute_field
+from helpers import field_to_state, action_to_control, field_to_reward
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -21,6 +21,16 @@ ny = 65
 nz = 16
 npl = 3
 
+# Load the reference average du/dy at the wall to use as baseline (for wbci 6 or 7)
+opposition_dudy_dict = {"180_16x65x16"   : 3.7398798426242075,
+                      "180_32x33x32"   : 3.909412638928125,
+                      "180_32x65x32"   : 3.7350180468974763,#
+                      "180_64x65x64"   : 3.82829465265046,
+                      "180_128x65x128" : 3.82829465265046}
+
+retau = 180
+baseline_dudy = opposition_dudy_dict[f"{int(retau)}_{nx}x{ny}x{nz}"]
+
 wbci = 7
 nctrlx = 16
 nctrlz = 16
@@ -38,21 +48,12 @@ h=1.
 Lx = 2.67*h
 Lz = 0.8*h
 
-retau = 180
 nxs_ = 1
 nzs_ = 1
 xchange = 1
 zchange = 1
 
 printFrequency = 100
-# Load the reference average du/dy at the wall to use as baseline (for wbci 6 or 7)
-opposition_dudy_dict = {"180_16x65x16"   : 3.7398798426242075,
-                      "180_32x33x32"   : 3.909412638928125,
-                      "180_32x65x32"   : 3.7350180468974763,#
-                      "180_64x65x64"   : 3.82829465265046,
-                      "180_128x65x128" : 3.82829465265046}
-
-baseline_dudy = opposition_dudy_dict[f"{int(retau)}_{nx}x{ny}x{nz}"]
 
 version = 9 # V-RACER tag for plotting
 saveFrqncy = 500
@@ -87,8 +88,7 @@ def env(s, args):
             for zidx in range(nz):
                 subComm.Recv([field[plidx-1,zidx,:], MPI.DOUBLE], source=0, tag=maxProc+10+plidx+zidx+1)
 
-        state = fieldToState(field, compression=args.compression)
-        s["State"] = state
+        s["State"] = field_to_state(field, nagx=args.nagx, nagz=args.nagz, compression=args.compression)
 
         step = 0
         done = False
@@ -105,8 +105,8 @@ def env(s, args):
             s.update()
         
             # Retrieve control from korali
-            control = s["Action"] 
-            control = np.reshape(control,(nctrlz, nctrlx))
+            action = s["Action"] 
+            control = action_to_control(action, args.nagx, args.nagz, nctrlx, nctrlz)
             control -= np.mean(control)
 
             #print("Python sending control to Fortran")
@@ -136,16 +136,10 @@ def env(s, args):
             uxzAvg /= (i_evolv*dy)
 
             # Distributing the field to compute the individual reward per each agent
-            wallStresses = distribute_field(np.expand_dims(uxzAvg,0),agents,nctrlx,nctrlz,partial_reward,reward=True)
-
-            # Computing the reward
-            reward = 0.
-            for agent in agents:
-                reward += 1-np.mean(wallStresses[agent])/baseline_dudy
-            reward /= len(agents)
-            cumReward += reward
-            #print(f"Reward {reward}, Stress {wallStresses[agent[0]]}",flush=True)
+            reward = field_to_reward(uxzAvg,args.nagx,args.nagz, baseline_dudy)
             s["Reward"] = reward
+            cumReward += np.mean(reward)
+            #print(f"Reward {reward}, Stress {wallStresses[agent[0]]}",flush=True)
 
             #print("Python receiving state from Fortran", flush=True)
             subComm.Send([requestState, MPI.CHARACTER], dest=0, tag=maxProc+100)
@@ -154,14 +148,14 @@ def env(s, args):
                 for zidx in range(nz):
                     subComm.Recv([field[plidx-1,zidx,:], MPI.DOUBLE], source=0, tag=maxProc+10+plidx+zidx+1)
 
-            state = fieldToState(field, compression=args.compression)
-            s["State"] = state
+            s["State"] = field_to_state(field, nagx=args.nagx, nagz=args.nagz, compression=args.compression)
 
             prevTime = currentTime
             currentTime = np.array(0,dtype=np.double)
             subComm.Recv([currentTime, MPI.DOUBLE], source=0, tag=maxProc+960)
 
             step = step + 1
+            print(step)
 
             # store data
             if args.test:

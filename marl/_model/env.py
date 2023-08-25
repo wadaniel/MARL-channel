@@ -88,9 +88,7 @@ def env(s, args):
             for zidx in range(nz):
                 subComm.Recv([field[plidx-1,zidx,:], MPI.DOUBLE], source=0, tag=maxProc+10+plidx+zidx+1)
 
-        state = field_to_state(field, nagx=args.nagx, nagz=args.nagz, compression=args.compression)
         s["State"] = field_to_state(field, nagx=args.nagx, nagz=args.nagz, compression=args.compression)
-        print(state)
 
         step = 0
         done = False
@@ -141,7 +139,7 @@ def env(s, args):
             reward = field_to_reward(uxzAvg,args.nagx,args.nagz,nz,nx,baseline_dudy)
             s["Reward"] = reward
             cumReward += np.mean(reward)
-            print(f"Reward {reward}",flush=True)
+            #print(f"Reward {reward}",flush=True)
 
             #print("Python receiving state from Fortran", flush=True)
             subComm.Send([requestState, MPI.CHARACTER], dest=0, tag=maxProc+100)
@@ -157,7 +155,6 @@ def env(s, args):
             subComm.Recv([currentTime, MPI.DOUBLE], source=0, tag=maxProc+960)
 
             step = step + 1
-            print(step)
 
             # store data
             if args.test:

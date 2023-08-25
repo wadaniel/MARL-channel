@@ -88,7 +88,9 @@ def env(s, args):
             for zidx in range(nz):
                 subComm.Recv([field[plidx-1,zidx,:], MPI.DOUBLE], source=0, tag=maxProc+10+plidx+zidx+1)
 
+        state = field_to_state(field, nagx=args.nagx, nagz=args.nagz, compression=args.compression)
         s["State"] = field_to_state(field, nagx=args.nagx, nagz=args.nagz, compression=args.compression)
+        print(state)
 
         step = 0
         done = False
@@ -136,10 +138,10 @@ def env(s, args):
             uxzAvg /= (i_evolv*dy)
 
             # Distributing the field to compute the individual reward per each agent
-            reward = field_to_reward(uxzAvg,args.nagx,args.nagz, baseline_dudy)
+            reward = field_to_reward(uxzAvg,args.nagx,args.nagz,nz,nx,baseline_dudy)
             s["Reward"] = reward
             cumReward += np.mean(reward)
-            #print(f"Reward {reward}, Stress {wallStresses[agent[0]]}",flush=True)
+            print(f"Reward {reward}",flush=True)
 
             #print("Python receiving state from Fortran", flush=True)
             subComm.Send([requestState, MPI.CHARACTER], dest=0, tag=maxProc+100)

@@ -1,7 +1,8 @@
 import numpy as np
 
 def field_to_state(field, nagx, nagz, compression=1):
-    if compression == 1:
+    na = nagx*nagz
+    if na == 1 and compression == 1:
         return field.flatten().tolist()
 
     ns, nz, nx, = field.shape
@@ -13,20 +14,20 @@ def field_to_state(field, nagx, nagz, compression=1):
             for xidx in range(cnx):
                 state[s,zidx,xidx] = np.mean(field[s,zidx*compression:(zidx+1)*compression, xidx*compression:(xidx+1)*compression])
 
-    na = nagx*nagz
     if nagx*nagz == 1:
         return state.flatten().tolist()
+
     else:
         idx = 0
-        state = []*na
+        stateList = []
         canz=cnz//nagz
         canx=cnx//nagx
         for zidx in range(nagz):
             for xidx in range(nagx):
-                state[idx] = state[:,zidx*canz:(zidx+1)*canz, xidx*canx:(xidx+1)*canx].flatten().tolist()
+                stateList.append(state[:,zidx*canz:(zidx+1)*canz, xidx*canx:(xidx+1)*canx].flatten().tolist())
                 idx+=1
 
-        return state
+        return stateList
 
 
 def action_to_control(action, nagx, nagz, nctrlx, nctrlz):
@@ -47,21 +48,19 @@ def action_to_control(action, nagx, nagz, nctrlx, nctrlz):
         return control
             
         
-def field_to_reward(field,nagx,nagz,baseline_dudy):
+def field_to_reward(field,nagx,nagz,nz,nx,baseline_dudy):
     na = nagx*nagz
     if na == 1:
         return 1.-np.mean(field)/baseline_dudy
     else:
         idx = 0
-    
-        nz, nx = field.shape
         canz= nz//nagz
         canx= nx//nagx
 
         rewards = [0]*na
         for zidx in range(nagz):
             for xidx in range(nagx):
-                rewards[idx] = 1.-np.mean(field[zidx*nz:(zidx+1)*nz, xidx*nx:(xidx+1)*nx])/baseline_dudy
+                rewards[idx] = 1.-np.mean(field[zidx*canz:(zidx+1)*canz, xidx*canx:(xidx+1)*canx])/baseline_dudy
                 idx+=1
 
         return rewards

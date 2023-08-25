@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 launchCommand = './bla_16x65x16_1'
 #launchCommand = './bla_16x65x16_1_debug'
 srcDir = './../bin/'
-workDir = './../runOpposition3000/'
+workDir = './../runOpposition3000_10p/'
 maxProc = 1
 
 requestState = b'STATE'
@@ -61,8 +61,8 @@ baseline_dudy = baseline_dudy_dict[f"{int(retau)}_{nx}x{ny}x{nz}"]
 
 alpha = 1.0
 #maxSteps = 5000
+#maxSteps = 15000
 maxSteps = 3000
-#maxSteps = 500 #3000
 
 saveFrqncy = 500
 
@@ -109,12 +109,18 @@ def rollout():
     while not done and step < maxSteps:
 
 
+        assert(np.sum(field[0,:,:]) < 1e-12)
+        #print("[opposition] field 0 sum")
+        #print(np.sum(field[0,:,:]))
+        #print("[opposition] field 1 sum")
+        #print(np.sum(field[1,:,:]))
+
         # Calculating new opposition control action
         if wbci == 6:
             assert(nctrlx == nx)
             assert(nctrlz == nz)
 
-            control = -field[0,:,:]
+            control = field[0,:,:]
             control -= np.mean(control)
             sys.exit()
 
@@ -269,12 +275,18 @@ if __name__ == "__main__":
     stresses = []
     rewards = []
 
-    os.makedirs(workDir, exist_ok=True)
-    shutil.copy(srcDir + "bla.i", workDir)
-    shutil.copy(srcDir + "bla_16x65x16_1", workDir)
-    shutil.copy(srcDir + "bla_16x65x16_1_debug", workDir)
+    #ycoords = -0.83146961 # y+=15.17
+    ycoords = -0.88192126 # y+=10.63
 
-    versions = [0,1,2,3,4,5,6,7,8]
+    os.makedirs(workDir, exist_ok=True)
+    os.system(f"sed 's/SAMPLINGHEIGHT/{ycoords}/' {srcDir}bla_macro.i > {workDir}/bla.i")
+    #shutil.copy(srcDir + "bla.i", workDir)
+    shutil.copy(srcDir + "bla_16x65x16_1", workDir)
+    #shutil.copy(srcDir + "bla_16x65x16_1_debug", workDir)
+
+    versions = [7]
+    #versions = [0,1,2,3,4,5,6,7,8]
+    #versions = [0,4,5,6,7,8]
     for v in versions:
         version = v
         s, r = rollout()

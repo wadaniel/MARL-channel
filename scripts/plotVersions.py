@@ -7,7 +7,8 @@ from helpers import versionNames
 
 import numpy as np
 
-workDir = './../runOpposition/'
+#workDir = './../runOpposition/'
+workDir = './../runOpposition3000_10/'
 
 def loadData(workdir, version):
     file = open(f'{workDir}control_v{version}.pickle', 'rb')
@@ -33,7 +34,8 @@ def get_color_from_colormap(value, colormap_name='viridis'):
 
 if __name__ == "__main__":
 
-    versions = [0,1,2,3,4,5,6,7,8]
+    #versions = [0,1,2,3,4,5,6,7,8]
+    versions = [7]
     stresses = []
 
     for v in versions:

@@ -8,7 +8,10 @@ from helpers import versionNames
 import numpy as np
 
 #workDir = './../runOpposition/'
-workDir = './../runOpposition3000_10/'
+#workDir = './../runOpposition3000_10/'
+#workDir = './../runOpposition3000_10p/'
+#workDir = './../runOpposition3000_10tm/'
+workDir = './../runControl/'
 
 def loadData(workdir, version):
     file = open(f'{workDir}control_v{version}.pickle', 'rb')
@@ -35,7 +38,8 @@ def get_color_from_colormap(value, colormap_name='viridis'):
 if __name__ == "__main__":
 
     #versions = [0,1,2,3,4,5,6,7,8]
-    versions = [7]
+    #versions = [0]
+    #versions = [0,7]
     stresses = []
 
     for v in versions:
@@ -75,8 +79,9 @@ if __name__ == "__main__":
 
     for v in versions:
         _, _, _, _, stress = loadData(workDir, v)
-        color = get_color_from_colormap(v/max(versions), 'tab10')
-        ax.plot(np.arange(T), stress, linestyle='-', lw=1, label=f'{versionNames[v]}', color=color)
+        color = get_color_from_colormap(v/len(versions), 'tab10')
+        ax.plot(np.arange(T), stress, linestyle='--', lw=1, color=color)
+        ax.plot(np.arange(T), np.cumsum(stress)/np.arange(1,T+1), linestyle='-', lw=1, label=f'{versionNames[v]}', color=color)
  
     ax.legend()
     plt.tight_layout()

@@ -1,6 +1,12 @@
 import numpy as np
 
 def field_to_state(field, nagx, nagz, compression=1):
+
+    field[0,:,:] = np.roll(field[0,:,:],-1,axis=0)
+    field[0,:,:] = np.roll(field[0,:,:],-9,axis=1)
+    field[1,:,:] = np.roll(field[1,:,:],-1,axis=0)
+    field[1,:,:] = np.roll(field[1,:,:],-9,axis=1)
+
     na = nagx*nagz
     ns, nz, nx, = field.shape
     cnz = nz//compression

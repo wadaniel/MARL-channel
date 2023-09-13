@@ -58,11 +58,11 @@ uxz_yp0.pl
 2
 2
 SAMPLINGHEIGHT
-vxz_yp15.pl                                                                     
+vxz_ypXYZ.pl                                                                     
 2
 1
 SAMPLINGHEIGHT
-uxz_yp15.pl                                                                     
+uxz_ypXYX.pl                                                                     
 .true.
-28
+80
 .false.

@@ -10,8 +10,11 @@ import matplotlib.pyplot as plt
 
 launchCommand = './bla_16x65x16_1'
 #launchCommand = './bla_16x65x16_1_debug'
+#launchCommand = './bla_16x65x16_1_debug2'
+#launchCommand = './bla_512x193x512_4_debug2'
+#launchCommand = './bla_32x65x32_1_debug2'
 srcDir = './../bin/'
-workDir = './../runOpposition3000_10p/'
+workDir = './../runControl/'
 maxProc = 1
 
 requestState = b'STATE'
@@ -24,7 +27,10 @@ seed=1337
 nx = 16
 ny = 65
 nz = 16
-npl = 3
+#nx = 32
+#ny = 65
+#nz = 32
+npl = 4
 
 h=1.
 Lx = 2.67*h
@@ -32,11 +38,12 @@ Lz = 0.8*h
 
 
 wbci = 7
-nctrlx = 16
-nctrlz = 16
+nctrlx = 16 #nx#32#512#16
+nctrlz = 16 #nz#32#512#16
 
 dy = 1.-np.cos(np.pi*1/(ny-1)) 
-ndrl = 28 #400 #80
+#ndrl = 28 #400 #80
+ndrl = 80
 nst = 4
 
 rew_mode = 'Instantaneous'
@@ -51,18 +58,22 @@ xchange = 1
 zchange = 1
 
 # Load the reference average du/dy at the wall to use as baseline (for wbci 6 or 7)
-baseline_dudy_dict = {"180_16x65x16"   : 3.7398798426242075,
-                      "180_32x33x32"   : 3.909412638928125,
-                      "180_32x65x32"   : 3.7350180468974763,#
-                      "180_64x65x64"   : 3.82829465265046,
-                      "180_128x65x128" : 3.82829465265046}
+baseline_dudy_dict = {"180_16x65x16"    : 3.7398798426242075,
+                      "180_32x33x32"    : 3.909412638928125,
+                      "180_32x65x32"    : 3.7350180468974763,#
+                      "180_64x65x64"    : 3.82829465265046,
+                      "180_128x65x128"  : 3.82829465265046,
+                      "180_512x193x512" : 3.7398798426242075,  #dummy
+                      "180_32x65x32"    : 3.7398798426242075  #dummy
+                      }
 
 baseline_dudy = baseline_dudy_dict[f"{int(retau)}_{nx}x{ny}x{nz}"]
+baseline_dudy = 3.671 # own measurement 16x65x16
 
 alpha = 1.0
-#maxSteps = 5000
-#maxSteps = 15000
-maxSteps = 3000
+#maxSteps = 10
+maxSteps = 1000
+#maxSteps = 3000
 
 saveFrqncy = 500
 
@@ -77,7 +88,7 @@ def rollout():
 
     allDataUplane = np.empty((maxSteps, nz, nx))
     allDataVplane = np.empty((maxSteps, nz, nx))
-    allDataControl = np.empty((maxSteps, nz, nx))
+    allDataControl = np.empty((maxSteps, nctrlz, nctrlx))
     allDataStress = np.empty((maxSteps, nz, nx))
 
     #print(f"Launching SIMSON from workdir {workDir}",flush=True)
@@ -93,7 +104,7 @@ def rollout():
         for zidx in range(nz):
             subComm.Recv([field[plidx-1,zidx,:], MPI.DOUBLE], source=0, tag=maxProc+10+plidx+zidx+1)
 
-
+    fieldOld = field
     #state = fieldToState(field)
 
     step = 0
@@ -105,30 +116,50 @@ def rollout():
     initTime = np.array(0,dtype=np.double)
     subComm.Recv([initTime, MPI.DOUBLE], source=0, tag=maxProc+960)
     currentTime = initTime
+    control = np.zeros((nctrlz,nctrlx))
 
     while not done and step < maxSteps:
 
-
+        controlOld = control
         assert(np.sum(field[0,:,:]) < 1e-12)
-        #print("[opposition] field 0 sum")
-        #print(np.sum(field[0,:,:]))
-        #print("[opposition] field 1 sum")
-        #print(np.sum(field[1,:,:]))
 
         # Calculating new opposition control action
         if wbci == 6:
-            assert(nctrlx == nx)
-            assert(nctrlz == nz)
-
-            control = field[0,:,:]
-            control -= np.mean(control)
             sys.exit()
 
         # Calculating new action
         elif wbci == 7:
-            control = calcControl(nctrlz, nctrlx, step//stepfac, maxv, field[0,:,:], version)
-            control = np.clip(control,a_min=-maxv,a_max=maxv)
-            control -= np.mean(control)
+            cfield = field[0,:,:].copy()
+            cfield = np.roll(cfield,-1,axis=0)
+            cfield = np.roll(cfield,-9,axis=1)
+
+            vfield = field[2,:,:].copy()
+            vfield = np.roll(vfield,-1,axis=0)
+            vfield = np.roll(vfield,-9,axis=1)
+
+            control = calcControl(nctrlz, nctrlx, step//stepfac, maxv, cfield, version)
+            #control /= 10 #(works well)
+            #control /= 5 #(works well)
+            #control /= 2 #(not working)
+            #control = np.clip(control,a_min=-maxv,a_max=maxv)
+            #if step < 1000:
+            #    control -= control
+            #control = -field[0,:,:]
+            #control -= control
+            #control[:nctrlz//2,:] = np.arange(0,nctrlz)/1000
+            #control[nctrlx//2:,:] = -np.arange(0,nctrlx)/1000 #500
+            #control = -cfield
+            #control -= np.mean(control)
+            #control[8:12,:] = -np.arange(0,16)/100 
+            #control[12:,:] = -np.arange(0,16)/500
+            #control -= control
+            #print("c")
+            #print(controlOld.shape)
+            #print(controlOld)
+            #print("f")
+            #print(vfield)
+            #print("XXX")
+
 
         #print(control)
         #print("Python sending control to Fortran")
@@ -207,9 +238,11 @@ def rollout():
         #print("Python receiving state from Fortran", flush=True)
         subComm.Send([requestState, MPI.CHARACTER], dest=0, tag=maxProc+100)
         field = np.ndarray((npl-1,nz,nx),dtype=np.double)
+        buffer = np.ndarray((nx,),dtype=np.double)
         for plidx in range(1,npl):
             for zidx in range(nz):
-                subComm.Recv([field[plidx-1,zidx,:], MPI.DOUBLE], source=0, tag=maxProc+10+plidx+zidx+1)
+                subComm.Recv([buffer, MPI.DOUBLE], source=0, tag=maxProc+10+plidx+zidx+1)
+                field[plidx-1,zidx,:] = buffer
 
         #state = fieldToState(field)
         prevTime = currentTime
@@ -222,6 +255,7 @@ def rollout():
         allDataUplane[step, :, :] = field[1, :, :]
         allDataStress[step, :, :] = uxzAvg
 
+        fieldOld = field
         step = step + 1
         if (step % 50 == 0):
             print(f"Step {step}, t={currentTime:.3f} (dt={(currentTime-prevTime):.3}), avg stress {avgStress:.3f}, stress mean {np.mean(stresses):.3f} sdev {np.std(stresses):.3f}",flush=True)
@@ -275,16 +309,21 @@ if __name__ == "__main__":
     stresses = []
     rewards = []
 
-    #ycoords = -0.83146961 # y+=15.17
-    ycoords = -0.88192126 # y+=10.63
+    ycoords = -0.83146961 # y+=15.17
+    #ycoords = -0.88192126 # y+=10.63
+    #ycoords = -0.99880 #y+ = ~0 (no difference)
 
     os.makedirs(workDir, exist_ok=True)
-    os.system(f"sed 's/SAMPLINGHEIGHT/{ycoords}/' {srcDir}bla_macro.i > {workDir}/bla.i")
-    #shutil.copy(srcDir + "bla.i", workDir)
+    #os.system(f"sed 's/SAMPLINGHEIGHT/{ycoords}/' {srcDir}bla_macro.i > {workDir}/bla.i")
+    shutil.copy(srcDir + "bla.i", workDir)
     shutil.copy(srcDir + "bla_16x65x16_1", workDir)
-    #shutil.copy(srcDir + "bla_16x65x16_1_debug", workDir)
+    shutil.copy(srcDir + "bla_16x65x16_1_debug", workDir)
+    shutil.copy(srcDir + "bla_16x65x16_1_debug2", workDir)
+    shutil.copy(srcDir + "bla_512x193x512_4_debug2", workDir)
+    shutil.copy(srcDir + "bla_32x65x32_1_debug2", workDir)
 
-    versions = [7]
+    versions = [0, 7]
+    #versions = [7] #,0]
     #versions = [0,1,2,3,4,5,6,7,8]
     #versions = [0,4,5,6,7,8]
     for v in versions:

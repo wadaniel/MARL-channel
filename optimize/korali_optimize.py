@@ -34,7 +34,7 @@ nctrlx = 16
 nctrlz = 16
 
 dy = 1.-np.cos(np.pi*1/(ny-1)) 
-ndrl = 28 #400 #80
+ndrl = 80 #28 #400 #80
 nst = 4
 
 rew_mode = 'Instantaneous'
@@ -55,10 +55,11 @@ baseline_dudy_dict = {"180_16x65x16"   : 3.7398798426242075,
                       "180_64x65x64"   : 3.82829465265046,
                       "180_128x65x128" : 3.82829465265046}
 
-baseline_dudy = baseline_dudy_dict[f"{int(retau)}_{nx}x{ny}x{nz}"]
+#baseline_dudy = baseline_dudy_dict[f"{int(retau)}_{nx}x{ny}x{nz}"]
+baseline_dudy = 3.671
 
 alpha = 1.0
-maxSteps = 3000
+maxSteps = 1000 #3000
 
 saveFrqncy = 500
 printFrqncy = 1000
@@ -105,10 +106,13 @@ def rollout(s, workDir):
 
     while not done and step < maxSteps:
 
+        cfield = field[0,:,:].copy()
+        cfield = np.roll(cfield,-1,axis=0)
+        cfield = np.roll(cfield,-9,axis=1)
 
         # Calculating control action
-        sig = np.clip(asdev*np.abs(field[0,:,:]) + bsdev, a_min=0.01, a_max=999)
-        mu  = amu*field[0,:,:]
+        sig = np.clip(asdev*np.abs(cfield) + bsdev, a_min=0.01, a_max=999)
+        mu  = amu*cfield
         control = np.random.normal(mu, sig)
         control = np.clip(control,a_min=-maxv,a_max=maxv)
         control -= np.mean(control)
@@ -259,9 +263,19 @@ if __name__ == "__main__":
         help='Population size',
         default=8,
         type=int,
-        required=False)    
+        required=False)
+    parser.add_argument(
+        '--ycoords',
+        help='Sampling height (alt -0.83146961)',
+        default=-0.99880,
+        type=float,
+        required=False)
+
 
     args = parser.parse_args()
+
+    print("Running Flow optimization with arguments:")
+    print(args)
 
     workDir = f'./../cmaes{args.run}/'
     os.makedirs(workDir, exist_ok=True)
@@ -270,9 +284,10 @@ if __name__ == "__main__":
     rank = comm.Get_rank()
     if rank == 0:
         print(f'[korali_optimize] rank 0 copying files to {workDir}')
-        shutil.copy(srcDir + "bla.i", workDir)
+        os.system(f"sed 's/SAMPLINGHEIGHT/{args.ycoords}/' {srcDir}bla_macro.i > {workDir}/bla.i")
+        #shutil.copy(srcDir + "bla.i", workDir)
         shutil.copy(srcDir + "bla_16x65x16_1", workDir)
-        shutil.copy(srcDir + "bla_16x65x16_1_debug", workDir)
+        #shutil.copy(srcDir + "bla_16x65x16_1_debug", workDir)
     MPI.COMM_WORLD.Barrier()
 
     # Importing computational model
@@ -293,20 +308,20 @@ if __name__ == "__main__":
 
     # Defining the problem's variables (max/min +/-0.04)
     e["Variables"][0]["Name"] = "bsdev"
-    e["Variables"][0]["Lower Bound"] = -5.0
-    e["Variables"][0]["Upper Bound"] = 5.0
+    e["Variables"][0]["Lower Bound"] = -3.0
+    e["Variables"][0]["Upper Bound"] = 3.0
     e["Variables"][0]["Initial Mean"] = 0.0
     e["Variables"][0]["Initial Standard Deviation"] = 0.5
 
     e["Variables"][1]["Name"] = "asdev"
-    e["Variables"][1]["Lower Bound"] = -5.0
-    e["Variables"][1]["Upper Bound"] = 5.
+    e["Variables"][1]["Lower Bound"] = -3.0
+    e["Variables"][1]["Upper Bound"] = -3.0
     e["Variables"][1]["Initial Mean"] = 0.
     e["Variables"][1]["Initial Standard Deviation"] = 0.5
 
     e["Variables"][2]["Name"] = "amu"
-    e["Variables"][2]["Lower Bound"] = -5.
-    e["Variables"][2]["Upper Bound"] = 5.0
+    e["Variables"][2]["Lower Bound"] = -3.0
+    e["Variables"][2]["Upper Bound"] = 3.0
     e["Variables"][2]["Initial Mean"] = 0.
     e["Variables"][2]["Initial Standard Deviation"] = 0.5
 

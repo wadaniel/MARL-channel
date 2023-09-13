@@ -57,12 +57,12 @@ xy.stat
 uxz_yp0.pl                                                                      
 2
 2
--0.83147
-vxz_yp15.pl                                                                     
+-0.9988
+vxz_ypXYZ.pl                                                                     
 2
 1
--0.83147
-uxz_yp15.pl                                                                     
+-0.9988
+uxz_ypXYX.pl                                                                     
 .true.
-28
+80
 .false.

@@ -18,7 +18,7 @@ parser.add_argument(
 parser.add_argument(
     '--episodeLength',
     help='Length of sim in steps',
-    default=500,
+    default=1000,
     type=int,
     required=False)
 parser.add_argument(
@@ -68,6 +68,12 @@ parser.add_argument(
     help='Field ocmpression factor in one dim',
     default=2,
     type=int,
+    required=False)
+parser.add_argument(
+    '--ycoords',
+    help='Sampling height (alt -0.83146961)',
+    default=-0.99880,
+    type=float,
     required=False)
 parser.add_argument(
     '--run',
@@ -192,7 +198,8 @@ elif args.concurrentWorkers > 1:
 if rank == 0:
     print(f'[korali_optimize] rank 0 copying files to {args.resDir}')
     os.makedirs(args.resDir, exist_ok=True)
-    shutil.copy(srcDir + "bla.i", args.resDir)
+    os.system(f"sed 's/SAMPLINGHEIGHT/{args.ycoords}/' {srcDir}bla_macro.i > {args.workDir}/bla.i")
+    #shutil.copy(srcDir + "bla.i", args.resDir)
     shutil.copy(srcDir + "bla_16x65x16_1", args.resDir)
 
 if args.concurrentWorkers > 1:

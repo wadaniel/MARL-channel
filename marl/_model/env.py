@@ -29,14 +29,15 @@ opposition_dudy_dict = {"180_16x65x16"   : 3.7398798426242075,
                       "180_128x65x128" : 3.82829465265046}
 
 retau = 180
-baseline_dudy = opposition_dudy_dict[f"{int(retau)}_{nx}x{ny}x{nz}"]
+#baseline_dudy = opposition_dudy_dict[f"{int(retau)}_{nx}x{ny}x{nz}"]
+baseline_dudy = 3.671
 
 wbci = 7
 nctrlx = 16
 nctrlz = 16
 
 dy = 1.-np.cos(np.pi*1/(ny-1)) 
-ndrl = 28
+ndrl = 80
 nst = 4
 
 rew_mode = 'Instantaneous'

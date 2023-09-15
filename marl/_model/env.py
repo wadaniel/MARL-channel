@@ -8,7 +8,6 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 
-launchCommand = './bla_16x65x16_1'
 maxProc = 1
 
 requestState = b'STATE'
@@ -68,9 +67,10 @@ def env(s, args):
     size = comm.Get_size()-1
 
     mpi_info = MPI.Info.Create()
-    mpi_info.Set('wdir',args.workDir)
+    mpi_info.Set('wdir',args.resDir)
     mpi_info.Set('bind_to','none')
 
+    launchCommand = f'./bla_16x65x16_1'
     print(f"[env] Python rank {rank}/{size} sending launch message to Fortran")
     subComm = MPI.COMM_SELF.Spawn(launchCommand,maxprocs=maxProc,info=mpi_info)
 

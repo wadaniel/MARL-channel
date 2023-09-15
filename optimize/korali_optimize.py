@@ -315,7 +315,7 @@ if __name__ == "__main__":
 
     e["Variables"][1]["Name"] = "asdev"
     e["Variables"][1]["Lower Bound"] = -3.0
-    e["Variables"][1]["Upper Bound"] = -3.0
+    e["Variables"][1]["Upper Bound"] = 3.0
     e["Variables"][1]["Initial Mean"] = 0.
     e["Variables"][1]["Initial Standard Deviation"] = 0.5
 

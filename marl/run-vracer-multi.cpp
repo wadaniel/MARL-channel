@@ -1,5 +1,6 @@
 #include "_model/env.hpp"
 #include "korali.hpp"
+#include <filesystem>
 
 int main(int argc, char *argv[])
 {
@@ -13,13 +14,16 @@ int main(int argc, char *argv[])
   }
 
   // retreiving number of task, agents, and ranks
-  int task    = atoi(argv[argc-5]);
-  int nAgents = atoi(argv[argc-3]);
   int nRanks  = atoi(argv[argc-1]);
   int rank;
+  size_t NUMAGENTS = 4;
+  size_t NUMACTIONS = 256;
+  size_t NUMSTATES = 256/NUMAGENTS;
+
+
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
   if (rank == 0)
-	  std::cout << "Running task : " << task << " with nAgents=" << nAgents << std::endl;
+	  std::cout << "Running with nRanks: " << nRanks << " and with nAgents=" << NUMAGENTS << std::endl;
 
   // Storing parameters for environment
   _argc = argc;
@@ -32,8 +36,8 @@ int main(int argc, char *argv[])
   N = (int)(N / nRanks); // Divided by the ranks per worker
 
   // Setting results path
-  std::string trainingResultsPath = "_trainingResults/";
-  std::string testingResultsPath = "_testingResults/";
+  std::string trainingResultsPath = "./../_trainingResults/";
+  std::string testingResultsPath = "./../_testingResults/";
 
   // Creating Experiment
   auto e = korali::Experiment();
@@ -49,8 +53,7 @@ int main(int argc, char *argv[])
 
   // Configuring Experiment
   e["Problem"]["Environment Function"] = &runEnvironment;
-  e["Problem"]["Agents Per Environment"] = nAgents;
-  // e["Problem"]["Policies Per Environment"] = nAgents;
+  e["Problem"]["Agents Per Environment"] = NUMAGENTS;
 
   // Setting results path and dumping frequency in CUP
   //e["Problem"]["Custom Settings"]["Dump Frequency"] = 0.0;
@@ -58,10 +61,6 @@ int main(int argc, char *argv[])
   //e["Problem"]["Actions Between Policy Updates"] = 1;
 
   // Setting up the state variables
-  size_t NUMAGENTS = 4;
-  size_t NUMACTIONS = 256;
-  size_t NUMSTATES = 256/NUMAGENTS;
-
   size_t curVariable = 0;
   for (; curVariable < NUMSTATES; curVariable++)
   {
@@ -132,6 +131,15 @@ int main(int argc, char *argv[])
   e["File Output"]["Frequency"] = 1;
   e["File Output"]["Use Multiple Files"] = false;
   e["File Output"]["Path"] = trainingResultsPath;
+
+  if (rank == 0)
+  {
+    std::cout << "rank 0 copying files to " << trainingResultsPath << std::endl;
+    mkdir(trainingResultsPath.c_str(),0777);
+    system("sed 's/SAMPLINGHEIGHT/{args.ycoords}/' {srcDir}bla_macro.i > {args.resDir}/bla.i");
+    std::filesystem::copy("../bin/bla_16x65x16_1", trainingResultsPath);
+  }
+
 
   ////// Running Experiment
   auto k = korali::Engine();

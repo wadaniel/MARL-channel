@@ -159,7 +159,7 @@ e["Solver"]["Type"] = "Agent / Continuous / VRACER"
 e["Solver"]["Mode"] = "Training"
 e["Solver"]["Experiences Between Policy Updates"] = 1
 e["Solver"]["Concurrent Workers"] = 1 # set below
-e["Solver"]["Episodes Per Generation"] = args.concurrentWorkers
+e["Solver"]["Episodes Per Generation"] = max(args.concurrentWorkers,1)
 e["Solver"]["Multi Agent Relationship"] = "Individual"
 
 e["Solver"]["Experience Replay"]["Start Size"] = 32768 #100*args.episodeLength #131072

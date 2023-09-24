@@ -36,23 +36,32 @@ def field_to_state(field, nagx, nagz, compression=1):
         return stateList
 
 
-def action_to_control(action, nagx, nagz, nctrlx, nctrlz):
+def action_to_control(action, nagx, nagz, nctrlx, nctrlz, compression=1):
     na = nagx*nagz
     if na == 1:
-        control = np.reshape(action,(nctrlz, nctrlx))
-        return control
+        control = np.reshape(action,(nctrlz//compression, nctrlx//compression))
     else:
         idx = 0
-        canz=nctrlz//nagz
-        canx=nctrlx//nagx
-        control = np.zeros((nctrlz, nctrlx))
+        canz=nctrlz//(nagz*compression)
+        canx=nctrlx//(nagx*compression)
+        control = np.zeros((nctrlz//compression, nctrlx//compression))
 
         for idx in range(len(action)):
             for zidx in range(nagz):
                 for xidx in range(nagx):
                     control[zidx*canz:(zidx+1)*canz,xidx*canx:(xidx+1)*canx] = np.reshape(action[idx],(canz,canx))
 
+
+    if compression == 1:
         return control
+
+    else:
+        controlt = np.zeros((nctrlz, nctrlx))
+        for i in range(nctrlz//compression):
+            for j in range(nctrlx//compression):
+                controlt[i*compression:(i+1)*compression, j*compression:(j+1)*compression] = control[i,j]
+
+        return controlt
             
         
 def field_to_reward(field,nagx,nagz,nz,nx,baseline_dudy):

@@ -66,6 +66,8 @@ def env(s, args):
     rank = comm.Get_rank()
     size = comm.Get_size()-1
 
+    compression = args.compression
+
     mpi_info = MPI.Info.Create()
     mpi_info.Set('wdir',args.resDir)
     mpi_info.Set('bind_to','none')
@@ -107,7 +109,7 @@ def env(s, args):
         
             # Retrieve control from korali
             action = s["Action"] 
-            control = action_to_control(action, args.nagx, args.nagz, nctrlx, nctrlz)
+            control = action_to_control(action, args.nagx, args.nagz, nctrlx, nctrlz, compression)
             control -= np.mean(control)
 
             #print("Python sending control to Fortran")

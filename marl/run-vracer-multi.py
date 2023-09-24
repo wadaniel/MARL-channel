@@ -135,8 +135,8 @@ e["Problem"]["Agents Per Environment"] = args.nagx*args.nagz
 
 assert args.nx/args.compression % args.nagx == 0
 assert args.nz/args.compression % args.nagz == 0
-assert args.nctrlx % args.nagx == 0
-assert args.nctrlz % args.nagz == 0
+assert args.nctrlx/args.compression % args.nagx == 0
+assert args.nctrlz/args.compression % args.nagz == 0
 
 nState = 2*args.nx*args.nz//(args.compression**2*args.nagx*args.nagz)
 
@@ -146,7 +146,7 @@ for i in range(nState):
 
 maxv = 0.04285714285714286
 
-for a in range(nState, nState+args.nctrlx*args.nctrlz//(args.nagx*args.nagz)):
+for a in range(nState, nState+args.nctrlx*args.nctrlz//(args.compression**2*args.nagx*args.nagz)):
     e["Variables"][a]["Name"] = "Contro No. " + str(a)
     e["Variables"][a]["Type"] = "Action"
     e["Variables"][a]["Lower Bound"] = -maxv

@@ -146,7 +146,9 @@ for i in range(nState):
 
 maxv = 0.04285714285714286
 
-for a in range(nState, nState+args.nctrlx*args.nctrlz//(args.compression**2*args.nagx*args.nagz)):
+nAct = args.nx*args.nz//(args.compression**2*args.nagx*args.nagz)
+
+for a in range(nState, nState+nAct):
     e["Variables"][a]["Name"] = "Contro No. " + str(a)
     e["Variables"][a]["Type"] = "Action"
     e["Variables"][a]["Lower Bound"] = -maxv
@@ -221,7 +223,8 @@ elif args.concurrentWorkers > 1:
     rank = comm.Get_rank()
 
 if rank == 0:
-    print(f'[korali_optimize] rank 0 copying files to {args.resDir}')
+    print(f'[run_vracer_multi] running with {nState} states and {nAct} actions')
+    print(f'[run_vracer_multi] rank 0 copying files to {args.resDir}')
     os.makedirs(args.resDir, exist_ok=True)
     os.system(f"sed 's/SAMPLINGHEIGHT/{args.ycoords}/' {srcDir}bla_macro.i > {args.resDir}/bla.i")
     shutil.copy(srcDir + "bla_16x65x16_1", args.resDir)

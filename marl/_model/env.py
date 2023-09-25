@@ -6,7 +6,7 @@ from helpers import field_to_state, action_to_control, field_to_reward
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-
+import os
 
 maxProc = 1
 
@@ -57,9 +57,19 @@ printFrequency = 100
 
 version = 9 # V-RACER tag for plotting
 saveFrqncy = 500
+bestCumReward = {
+        0 : -999,
+        1 : -999,
+        2 : -999,
+        3 : -999,
+        4 : -999,
+        5 : -999
+    }
+
 
 def env(s, args):
 
+    global bestCumReward
     start = time.time()
 
     comm = MPI.COMM_WORLD
@@ -67,16 +77,25 @@ def env(s, args):
     size = comm.Get_size()-1
 
     compression = args.compression
+    wdir = f"{args.resDir}/sample{rank}/"
+
+    testing = True if s["Mode"] == "Testing" else False
+        
+    os.chdir(wdir)
+    wdir = os.getcwd()
 
     mpi_info = MPI.Info.Create()
-    mpi_info.Set('wdir',args.resDir)
+    mpi_info.Set('wdir',wdir)
     mpi_info.Set('bind_to','none')
 
     launchCommand = f'./bla_16x65x16_1'
     print(f"[env] Python rank {rank}/{size} sending launch message to Fortran")
     subComm = MPI.COMM_SELF.Spawn(launchCommand,maxprocs=maxProc,info=mpi_info)
 
-    if args.test:
+    rewards = []
+
+    if testing:
+        print(f"[env] Run testing generation in {wdir}")
         allDataUplane = np.empty((args.episodeLength, nz, nx))
         allDataVplane = np.empty((args.episodeLength, nz, nx))
         allDataControl = np.empty((args.episodeLength, nz, nx))
@@ -142,6 +161,7 @@ def env(s, args):
             reward = field_to_reward(uxzAvg,args.nagx,args.nagz,nz,nx,baseline_dudy)
             s["Reward"] = reward
             cumReward += np.mean(reward)
+            rewards.append(reward)
             #print(f"Reward {reward}",flush=True)
 
             #print("Python receiving state from Fortran", flush=True)
@@ -160,69 +180,38 @@ def env(s, args):
             step = step + 1
 
             # store data
-            if args.test:
+            if testing:
                 allDataControl[step-1, :, :] = control
                 allDataVplane[step-1, :, :] = field[0, :, :]
                 allDataUplane[step-1, :, :] = field[1, :, :]
                 allDataStress[step-1, :, :] = uxzAvg
 
                 # console output
-                if saveFrqncy > 0 and step % saveFrqncy == 0:
-                    fieldName = f"{args.workDir}/ux_v{version}_s{step}.png"
-                    print(f"[env] saving field {fieldName}")
-                    fig, ax = plt.subplots(1,2)
-                    x, z = np.meshgrid(np.linspace(0, Lx, nx), np.linspace(0, Lz, nz))
-                    c = ax[0].pcolormesh(z, x, field[0,:,:], cmap='RdBu', vmin=field[0,:,:].min(), vmax=field[0,:,:].max())
-                    fig.colorbar(c, ax=ax[0])
-                    c = ax[1].pcolormesh(z, x, field[1,:,:], cmap='RdBu', vmin=field[1,:,:].min(), vmax=field[1,:,:].max())
-                    fig.colorbar(c, ax=ax[1])
-                    plt.savefig(fieldName)
-                    print("[env] done")
-
-                    cfieldName = f"{args.workDir}/contol_v{version}_s{step}.png"
-                    print(f"[env] saving control {cfieldName}")
-                    fig, ax = plt.subplots()
-                    x, z = np.meshgrid(np.linspace(0, Lx, nx), np.linspace(0, Lz, nz))
-                    c_min = control.min()
-                    c_max = control.max()
-                    c = ax.pcolormesh(z, x, control, cmap='RdBu', vmin=c_min, vmax=c_max)
-                    fig.colorbar(c, ax=ax)
-                    plt.savefig(cfieldName)
-                    print("[env] done")
-
-                    wfieldName = f"{args.workDir}/stress_v{version}_s{step}.png"
-                    print(f"[env] saving stresses {wfieldName}")
-                    fig, ax = plt.subplots()
-                    x, z = np.meshgrid(np.linspace(0, Lx, nx), np.linspace(0, Lz, nz))
-                    c = ax.pcolormesh(z, x, uxzAvg, cmap='RdBu', vmin=uxzAvg.min(), vmax=uxzAvg.max())
-                    fig.colorbar(c, ax=ax)
-                    plt.savefig(wfieldName)
-                    print("[env] done")
-                    plt.close("all")
-
-                # console output
                 if (step % printFrequency == 0):
                     print(f"[env] Step {step}, t={currentTime} (dt={(currentTime-prevTime):.3}), reward {reward:.3f}, reward mean {(cumReward/step):.3f}",flush=True)
-
-            # Terminate if max simulation time reached
-            if currentTime - initTime > 200000:
-                done = True
 
         s["Termination"] = "Terminal"
      
         # write data
-        if args.test:
-            with open(f'{args.workDir}/control_v{version}.pickle', 'wb') as f:
+        if testing and cumReward > bestCumReward[rank]:
+
+            bestCumReward[rank] = cumReward
+            print(f"[env] Storing generation with cumulative reward {cumReward} (rank {rank}) in {wdir}")
+
+            with open(f'{wdir}/control_r{rank}.pickle', 'wb') as f:
                 pickle.dump(allDataControl, f)
 
-            with open(f'{args.workDir}/fieldU_v{version}.pickle', 'wb') as f:
+            with open(f'{wdir}/fieldU_r{rank}.pickle', 'wb') as f:
                 pickle.dump(allDataUplane, f)
 
-            with open(f'{args.workDir}/fieldV_v{version}.pickle', 'wb') as f:
+            with open(f'{wdir}/fieldV_r{rank}.pickle', 'wb') as f:
                 pickle.dump(allDataVplane, f)
 
-            with open(f'{args.workDir}/stress_v{version}.pickle', 'wb') as f:
+            with open(f'{wdir}/stress_r{rank}.pickle', 'wb') as f:
                 pickle.dump(allDataStress, f)
+
+            with open(f'{wdir}/rewards_r{rank}.pickle', 'wb') as f:
+                pickle.dump(np.array(rewards), f)
 
     except Exception as e:
 

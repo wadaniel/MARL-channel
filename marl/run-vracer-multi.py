@@ -33,12 +33,6 @@ parser.add_argument(
     default=1e-4,
     type=float,
     required=False)
-#parser.add_argument(
-#    '--concurrentWorkers',
-#    help='Number of concurrent workers / environments',
-#    default=1,
-#    type=int,
-#    required=False)
 parser.add_argument(
     '--nx',
     help='Number of gridpoints in x',
@@ -105,7 +99,7 @@ print(f"Hello from rank {rank}")
 
 args = parser.parse_args()
 args.workDir = "./../bin" #f"./_korali_vracer_single_{args.run}/"
-args.resDir = f"./../_korali_vracer_multi_{args.run}"
+args.resDir = f"/scratch/wadaniel/MARL-channel/_korali_vracer_multi_{args.run}"
 args.concurrentWorkers = comm.Get_size() - 1
 
 if rank == 0:
@@ -128,7 +122,7 @@ if found == True:
 ### Defining the Cartpole problem's configuration
 e["Problem"]["Type"] = "Reinforcement Learning / Continuous"
 e["Problem"]["Environment Function"] = lambda s : env(s, args)
-e["Problem"]["Testing Frequency"] = 10
+e["Problem"]["Testing Frequency"] = 5
 e["Problem"]["Policy Testing Episodes"] = 1
 e["Problem"]["Agents Per Environment"] = args.nagx*args.nagz
 
@@ -164,10 +158,10 @@ e["Solver"]["Concurrent Workers"] = 1 # set below
 e["Solver"]["Episodes Per Generation"] = max(args.concurrentWorkers,1)
 e["Solver"]["Multi Agent Relationship"] = "Individual"
 
-e["Solver"]["Experience Replay"]["Start Size"] = 32768 #100*args.episodeLength #131072
+e["Solver"]["Experience Replay"]["Start Size"] = 16384
 e["Solver"]["Experience Replay"]["Maximum Size"] = 524288
 e["Solver"]["Experience Replay"]["Off Policy"]["REFER Beta"] = 0.3
-e["Solver"]["Experience Replay"]["Serialize"] = False
+e["Solver"]["Experience Replay"]["Serialize"] = True
 
 e["Solver"]["Discount Factor"] = 0.995
 e["Solver"]["Learning Rate"] = args.learningRate
@@ -200,11 +194,11 @@ e["Solver"]["Termination Criteria"]["Max Experiences"] = args.maxExperiences
 
 ### Setting file output configuration
 
+e["Console Output"]["Verbosity"] = "Detailed"
 e["File Output"]["Enabled"] = True
 e["File Output"]["Use Multiple Files"] = False
-e["File Output"]["Frequency"] = 20
-e["File Output"]["Path"] = args.resDir
-e["Console Output"]["Verbosity"] = "Detailed"
+e["File Output"]["Frequency"] = 10
+e["File Output"]["Path"] = f"../_korali_vracer_multi_{args.run}/" #args.resDir
 
 ###  Configuring the distributed conduit
 
@@ -222,16 +216,18 @@ elif args.concurrentWorkers > 1:
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
 
-if rank == 0:
-    print(f'[run_vracer_multi] running with {nState} states and {nAct} actions')
-    print(f'[run_vracer_multi] rank 0 copying files to {args.resDir}')
-    os.makedirs(args.resDir, exist_ok=True)
-    os.system(f"sed 's/SAMPLINGHEIGHT/{args.ycoords}/' {srcDir}bla_macro.i > {args.resDir}/bla.i")
-    shutil.copy(srcDir + "bla_16x65x16_1", args.resDir)
+wdir = f"{args.resDir}/sample{rank}/"
+print(f'[run_vracer_multi] running with {nState} states and {nAct} actions')
+
+os.makedirs(wdir, exist_ok=True)
+print(f'[run_vracer_multi] rank {rank} copying files to {wdir}')
+
+os.system(f"sed 's/SAMPLINGHEIGHT/{args.ycoords}/' {srcDir}bla_macro.i > {wdir}bla_macro.i")
+os.system(f"sed 's/UINIT/init_16x65x16_minchan_00{rank}.u/' {wdir}bla_macro.i > {wdir}bla.i")
+shutil.copy(srcDir + "bla_16x65x16_1", wdir)
 
 if args.concurrentWorkers > 1:
     MPI.COMM_WORLD.Barrier()
 
 ### Running Experiment
-
 k.run(e)

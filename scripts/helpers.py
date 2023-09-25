@@ -91,6 +91,10 @@ def calcControl(nctrlz, nctrlx, step, maxv, field, version, seed=-1):
         mu  = amu*field
         control = np.random.normal(mu, sig)
 
+    # Zero control
+    elif version == 9:
+        pass
+
     else:
         print("[helpers] control version not recognized")
         sys.exit()

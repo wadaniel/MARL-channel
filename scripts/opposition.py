@@ -30,7 +30,7 @@ nz = 16
 #nx = 32
 #ny = 65
 #nz = 32
-npl = 4
+npl = 3
 
 h=1.
 Lx = 2.67*h
@@ -133,35 +133,8 @@ def rollout():
             cfield = np.roll(cfield,-1,axis=0)
             cfield = np.roll(cfield,-9,axis=1)
 
-            vfield = field[2,:,:].copy()
-            vfield = np.roll(vfield,-1,axis=0)
-            vfield = np.roll(vfield,-9,axis=1)
-
             control = calcControl(nctrlz, nctrlx, step//stepfac, maxv, cfield, version)
-            #control /= 10 #(works well)
-            #control /= 5 #(works well)
-            #control /= 2 #(not working)
-            #control = np.clip(control,a_min=-maxv,a_max=maxv)
-            #if step < 1000:
-            #    control -= control
-            #control = -field[0,:,:]
-            #control -= control
-            #control[:nctrlz//2,:] = np.arange(0,nctrlz)/1000
-            #control[nctrlx//2:,:] = -np.arange(0,nctrlx)/1000 #500
-            #control = -cfield
-            #control -= np.mean(control)
-            #control[8:12,:] = -np.arange(0,16)/100 
-            #control[12:,:] = -np.arange(0,16)/500
-            #control -= control
-            #print("c")
-            #print(controlOld.shape)
-            #print(controlOld)
-            #print("f")
-            #print(vfield)
-            #print("XXX")
 
-
-        #print(control)
         #print("Python sending control to Fortran")
         subComm.Send([requestControl, MPI.CHARACTER], dest=0, tag=maxProc+100)
         if ((wbci == 6) or (wbci == 7)):
@@ -300,6 +273,9 @@ def rollout():
     with open(f'{workDir}/stress_v{version}.pickle', 'wb') as f:
         pickle.dump(allDataStress, f)
 
+    with open(f'{workDir}/rewards_v{version}.pickle', 'wb') as f:
+        pickle.dump(np.array(rewards), f)
+
     return np.mean(stresses), np.mean(rewards)
 
     
@@ -317,12 +293,13 @@ if __name__ == "__main__":
     #os.system(f"sed 's/SAMPLINGHEIGHT/{ycoords}/' {srcDir}bla_macro.i > {workDir}/bla.i")
     shutil.copy(srcDir + "bla.i", workDir)
     shutil.copy(srcDir + "bla_16x65x16_1", workDir)
-    shutil.copy(srcDir + "bla_16x65x16_1_debug", workDir)
-    shutil.copy(srcDir + "bla_16x65x16_1_debug2", workDir)
-    shutil.copy(srcDir + "bla_512x193x512_4_debug2", workDir)
-    shutil.copy(srcDir + "bla_32x65x32_1_debug2", workDir)
+    #shutil.copy(srcDir + "bla_16x65x16_1_debug", workDir)
+    #shutil.copy(srcDir + "bla_16x65x16_1_debug2", workDir)
+    #shutil.copy(srcDir + "bla_512x193x512_4_debug2", workDir)
+    #shutil.copy(srcDir + "bla_32x65x32_1_debug2", workDir)
 
-    versions = [0, 7]
+    versions = [7, 9]
+    #versions = [0, 7]
     #versions = [7] #,0]
     #versions = [0,1,2,3,4,5,6,7,8]
     #versions = [0,4,5,6,7,8]

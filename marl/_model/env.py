@@ -161,7 +161,7 @@ def env(s, args):
             reward = field_to_reward(uxzAvg,args.nagx,args.nagz,nz,nx,baseline_dudy)
             s["Reward"] = reward
             cumReward += np.mean(reward)
-            rewards.append(reward)
+            rewards.append(np.mean(reward))
             #print(f"Reward {reward}",flush=True)
 
             #print("Python receiving state from Fortran", flush=True)
@@ -186,9 +186,11 @@ def env(s, args):
                 allDataUplane[step-1, :, :] = field[1, :, :]
                 allDataStress[step-1, :, :] = uxzAvg
 
+                """
                 # console output
                 if (step % printFrequency == 0):
-                    print(f"[env] Step {step}, t={currentTime} (dt={(currentTime-prevTime):.3}), reward {reward:.3f}, reward mean {(cumReward/step):.3f}",flush=True)
+                    print(f"[env] Step {step}, t={currentTime} (dt={(currentTime-prevTime):.3}), reward {np.mean(reward):.3f}, reward mean {(cumReward/step):.3f}",flush=True)
+                """
 
         s["Termination"] = "Terminal"
      

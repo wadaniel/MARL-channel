@@ -1,7 +1,7 @@
 # bla.i file written by the python wrapper
 # Spatial channel flow simulation
 20070716
-../uinit/init_16x65x16_minchan_002.u                              
+../uinit/init_16x65x16_minchan_000.u                              
 end.uu                                                                          
 20000.0000
 -40
@@ -57,11 +57,13 @@ xy.stat
 uxz_yp0.pl                                                                      
 2
 2
--0.83146961
+#-0.83146961
+-0.88192126
 vxz_ypXYZ.pl                                                                     
 2
 1
--0.83146961
+#-0.83146961
+-0.88192126
 uxz_ypXYX.pl                                                                     
 .true.
 80

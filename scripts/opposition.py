@@ -289,13 +289,8 @@ if __name__ == "__main__":
     workDir = f'./../runControl{ycoords}/'
 
     os.makedirs(workDir, exist_ok=True)
-    #os.system(f"sed 's/SAMPLINGHEIGHT/{ycoords}/' {srcDir}bla_macro.i > {workDir}/bla.i")
     shutil.copy(srcDir + "bla.i", workDir)
     shutil.copy(srcDir + "bla_16x65x16_1", workDir)
-    #shutil.copy(srcDir + "bla_16x65x16_1_debug", workDir)
-    #shutil.copy(srcDir + "bla_16x65x16_1_debug2", workDir)
-    #shutil.copy(srcDir + "bla_512x193x512_4_debug2", workDir)
-    #shutil.copy(srcDir + "bla_32x65x32_1_debug2", workDir)
 
     versions = [7, 9]
     #versions = [0, 7]

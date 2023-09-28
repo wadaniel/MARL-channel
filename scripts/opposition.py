@@ -14,7 +14,6 @@ launchCommand = './bla_16x65x16_1'
 #launchCommand = './bla_512x193x512_4_debug2'
 #launchCommand = './bla_32x65x32_1_debug2'
 srcDir = './../bin/'
-workDir = './../runControl/'
 maxProc = 1
 
 requestState = b'STATE'
@@ -80,9 +79,8 @@ saveFrqncy = 500
 stepfac = 1
 maxv = 0.04285714285714286
 
-def rollout():
+def rollout(workDir, version):
 
-    global version
     print(version)
     np.random.seed(seed)
 
@@ -285,9 +283,10 @@ if __name__ == "__main__":
     stresses = []
     rewards = []
 
-    ycoords = -0.83146961 # y+=15.17
-    #ycoords = -0.88192126 # y+=10.63
+    #ycoords = -0.83146961 # y+=15.17
+    ycoords = -0.88192126 # y+=10.63
     #ycoords = -0.99880 #y+ = ~0 (no difference)
+    workDir = f'./../runControl{ycoords}/'
 
     os.makedirs(workDir, exist_ok=True)
     #os.system(f"sed 's/SAMPLINGHEIGHT/{ycoords}/' {srcDir}bla_macro.i > {workDir}/bla.i")
@@ -304,8 +303,7 @@ if __name__ == "__main__":
     #versions = [0,1,2,3,4,5,6,7,8]
     #versions = [0,4,5,6,7,8]
     for v in versions:
-        version = v
-        s, r = rollout()
+        s, r = rollout(workDir, v)
 
         stresses.append(s)
         rewards.append(r)

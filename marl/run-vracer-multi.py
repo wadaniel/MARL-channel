@@ -126,7 +126,6 @@ e["Problem"]["Testing Frequency"] = 5
 e["Problem"]["Policy Testing Episodes"] = 1
 e["Problem"]["Agents Per Environment"] = args.nagx*args.nagz
 
-
 assert args.nx/args.compression % args.nagx == 0
 assert args.nz/args.compression % args.nagz == 0
 assert args.nctrlx/args.compression % args.nagx == 0
@@ -165,7 +164,7 @@ e["Solver"]["Experience Replay"]["Serialize"] = True
 
 e["Solver"]["Discount Factor"] = 0.995
 e["Solver"]["Learning Rate"] = args.learningRate
-e["Solver"]["Mini Batch"]["Size"] = 128
+e["Solver"]["Mini Batch"]["Size"] = 512//(args.nagx*args.nagz)
 e["Solver"]["State Rescaling"]["Enabled"] = True
 e["Solver"]["Reward"]["Rescaling"]["Enabled"] = True
 

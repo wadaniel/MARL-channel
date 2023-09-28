@@ -74,9 +74,10 @@ def field_to_reward(field,nagx,nagz,nz,nx,baseline_dudy):
         canx= nx//nagx
 
         rewards = [0]*na
-        for idx in range(na):
-            for zidx in range(nagz):
-                for xidx in range(nagx):
-                    rewards[idx] = 1.-np.mean(field[zidx*canz:(zidx+1)*canz, xidx*canx:(xidx+1)*canx])/baseline_dudy
+        idx = 0
+        for zidx in range(nagz):
+            for xidx in range(nagx):
+                rewards[idx] = 1.-np.mean(field[zidx*canz:(zidx+1)*canz, xidx*canx:(xidx+1)*canx])/baseline_dudy
+                idx += 1
 
         return rewards

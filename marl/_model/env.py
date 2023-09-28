@@ -57,19 +57,9 @@ printFrequency = 100
 
 version = 9 # V-RACER tag for plotting
 saveFrqncy = 500
-bestCumReward = {
-        0 : -999,
-        1 : -999,
-        2 : -999,
-        3 : -999,
-        4 : -999,
-        5 : -999
-    }
-
 
 def env(s, args):
 
-    global bestCumReward
     start = time.time()
 
     comm = MPI.COMM_WORLD
@@ -78,6 +68,12 @@ def env(s, args):
 
     compression = args.compression
     wdir = f"{args.resDir}/sample{rank}/"
+
+    bestCumReward = -999
+    if os.path.exists(f"{wdir}/cumReward.dat"):
+        rewardfile = open(f"{wdir}/cumReward.dat","w")
+        bestCumReward = float(rewardfile.read())
+        rewardfile.close()
 
     testing = True if s["Mode"] == "Testing" else False
         
@@ -195,10 +191,13 @@ def env(s, args):
         s["Termination"] = "Terminal"
      
         # write data
-        if testing and cumReward > bestCumReward[rank]:
+        if testing and cumReward > bestCumReward:
 
-            bestCumReward[rank] = cumReward
+            bestCumReward = cumReward
             print(f"[env] Storing generation with cumulative reward {cumReward} (rank {rank}) in {wdir}")
+            rewardfile = open(f"{wdir}/cumReward.dat","w")
+            rewardfile.write("%s" % bestCumReward)
+            rewardfile.close()
 
             with open(f'{wdir}/control_r{rank}.pickle', 'wb') as f:
                 pickle.dump(allDataControl, f)

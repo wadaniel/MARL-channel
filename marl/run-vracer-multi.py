@@ -231,3 +231,5 @@ if args.concurrentWorkers > 1:
 
 ### Running Experiment
 k.run(e)
+
+print(f'[run_vracer_multi] training finished with args {args}')

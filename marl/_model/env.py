@@ -69,14 +69,15 @@ def env(s, args):
     compression = args.compression
     wdir = f"{args.resDir}/sample{rank}/"
 
+    testing = True if s["Mode"] == "Testing" else False
+
     bestCumReward = -999
-    if os.path.exists(f"{wdir}/cumReward.dat"):
-        rewardfile = open(f"{wdir}/cumReward.dat","w")
+    if testing and os.path.exists(f"{wdir}/cumReward.dat"):
+        rewardfile = open(f"{wdir}/cumReward.dat","r")
         bestCumReward = float(rewardfile.read())
         rewardfile.close()
 
-    testing = True if s["Mode"] == "Testing" else False
-        
+       
     os.chdir(wdir)
     wdir = os.getcwd()
 
@@ -196,7 +197,7 @@ def env(s, args):
             bestCumReward = cumReward
             print(f"[env] Storing generation with cumulative reward {cumReward} (rank {rank}) in {wdir}")
             rewardfile = open(f"{wdir}/cumReward.dat","w")
-            rewardfile.write("%s" % bestCumReward)
+            rewardfile.write(f'{bestCumReward}')
             rewardfile.close()
 
             with open(f'{wdir}/control_r{rank}.pickle', 'wb') as f:

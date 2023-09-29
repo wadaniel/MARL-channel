@@ -136,14 +136,14 @@ e["Solver"]["Experiences Between Policy Updates"] = 1
 e["Solver"]["Episodes Per Generation"] = args.concurrentWorkers
 e["Solver"]["Concurrent Workers"] = 1 # set below
 
-e["Solver"]["Experience Replay"]["Start Size"] = 32768 #100*args.episodeLength #131072
+e["Solver"]["Experience Replay"]["Start Size"] = 8192 #100*args.episodeLength #131072
 e["Solver"]["Experience Replay"]["Maximum Size"] = 524288
 e["Solver"]["Experience Replay"]["Off Policy"]["REFER Beta"] = 0.3
 e["Solver"]["Experience Replay"]["Serialize"] = False
 
 e["Solver"]["Discount Factor"] = 0.995
 e["Solver"]["Learning Rate"] = args.learningRate
-e["Solver"]["Mini Batch"]["Size"] = 128
+e["Solver"]["Mini Batch"]["Size"] = 512
 e["Solver"]["State Rescaling"]["Enabled"] = True
 e["Solver"]["Reward"]["Rescaling"]["Enabled"] = True
 
@@ -208,3 +208,5 @@ if args.concurrentWorkers > 1:
 ### Running Experiment
 
 k.run(e)
+
+print(f'[run_vracer_single] training finished with args {args}')

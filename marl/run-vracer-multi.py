@@ -157,7 +157,7 @@ e["Solver"]["Concurrent Workers"] = 1 # set below
 e["Solver"]["Episodes Per Generation"] = max(args.concurrentWorkers,1)
 e["Solver"]["Multi Agent Relationship"] = "Individual"
 
-e["Solver"]["Experience Replay"]["Start Size"] = 16384
+e["Solver"]["Experience Replay"]["Start Size"] = 8192
 e["Solver"]["Experience Replay"]["Maximum Size"] = 524288
 e["Solver"]["Experience Replay"]["Off Policy"]["REFER Beta"] = 0.3
 e["Solver"]["Experience Replay"]["Serialize"] = True

@@ -76,7 +76,10 @@ def env(s, args):
         rewardfile = open(f"{wdir}/cumReward.dat","r")
         bestCumReward = float(rewardfile.read())
         rewardfile.close()
-
+    elif os.path.exists(f"{wdir}/cumRewardTrain.dat"):
+        rewardfile = open(f"{wdir}/cumRewardTrain.dat","r")
+        bestCumReward = float(rewardfile.read())
+        rewardfile.close()
        
     os.chdir(wdir)
     wdir = os.getcwd()
@@ -91,12 +94,11 @@ def env(s, args):
 
     rewards = []
 
-    if testing:
-        print(f"[env] Run testing generation in {wdir}")
-        allDataUplane = np.empty((args.episodeLength, nz, nx))
-        allDataVplane = np.empty((args.episodeLength, nz, nx))
-        allDataControl = np.empty((args.episodeLength, nz, nx))
-        allDataStress = np.empty((args.episodeLength, nz, nx))
+    print(f"[env] Run testing generation in {wdir}")
+    allDataUplane = np.empty((args.episodeLength, nz, nx))
+    allDataVplane = np.empty((args.episodeLength, nz, nx))
+    allDataControl = np.empty((args.episodeLength, nz, nx))
+    allDataStress = np.empty((args.episodeLength, nz, nx))
 
     try:
 
@@ -177,43 +179,64 @@ def env(s, args):
             step = step + 1
 
             # store data
-            if testing:
-                allDataControl[step-1, :, :] = control
-                allDataVplane[step-1, :, :] = field[0, :, :]
-                allDataUplane[step-1, :, :] = field[1, :, :]
-                allDataStress[step-1, :, :] = uxzAvg
+            allDataControl[step-1, :, :] = control
+            allDataVplane[step-1, :, :] = field[0, :, :]
+            allDataUplane[step-1, :, :] = field[1, :, :]
+            allDataStress[step-1, :, :] = uxzAvg
 
-                """
-                # console output
-                if (step % printFrequency == 0):
-                    print(f"[env] Step {step}, t={currentTime} (dt={(currentTime-prevTime):.3}), reward {np.mean(reward):.3f}, reward mean {(cumReward/step):.3f}",flush=True)
-                """
+            """
+            # console output
+            if (step % printFrequency == 0):
+                print(f"[env] Step {step}, t={currentTime} (dt={(currentTime-prevTime):.3}), reward {np.mean(reward):.3f}, reward mean {(cumReward/step):.3f}",flush=True)
+            """
 
         s["Termination"] = "Terminal"
      
         # write data
-        if testing and cumReward > bestCumReward:
+        if cumReward > bestCumReward:
 
             bestCumReward = cumReward
             print(f"[env] Storing generation with cumulative reward {cumReward} (rank {rank}) in {wdir}")
-            rewardfile = open(f"{wdir}/cumReward.dat","w")
-            rewardfile.write(f'{bestCumReward}')
-            rewardfile.close()
 
-            with open(f'{wdir}/control_r{rank}.pickle', 'wb') as f:
-                pickle.dump(allDataControl, f)
+            if testing:
+                rewardfile = open(f"{wdir}/cumReward.dat","w")
+                rewardfile.write(f'{bestCumReward}')
+                rewardfile.close()
 
-            with open(f'{wdir}/fieldU_r{rank}.pickle', 'wb') as f:
-                pickle.dump(allDataUplane, f)
+                with open(f'{wdir}/control_r{rank}.pickle', 'wb') as f:
+                    pickle.dump(allDataControl, f)
 
-            with open(f'{wdir}/fieldV_r{rank}.pickle', 'wb') as f:
-                pickle.dump(allDataVplane, f)
+                with open(f'{wdir}/fieldU_r{rank}.pickle', 'wb') as f:
+                    pickle.dump(allDataUplane, f)
 
-            with open(f'{wdir}/stress_r{rank}.pickle', 'wb') as f:
-                pickle.dump(allDataStress, f)
+                with open(f'{wdir}/fieldV_r{rank}.pickle', 'wb') as f:
+                    pickle.dump(allDataVplane, f)
 
-            with open(f'{wdir}/rewards_r{rank}.pickle', 'wb') as f:
-                pickle.dump(np.array(rewards), f)
+                with open(f'{wdir}/stress_r{rank}.pickle', 'wb') as f:
+                    pickle.dump(allDataStress, f)
+
+                with open(f'{wdir}/rewards_r{rank}.pickle', 'wb') as f:
+                    pickle.dump(np.array(rewards), f)
+
+            else:
+                rewardfile = open(f"{wdir}/cumRewardTrain.dat","w")
+                rewardfile.write(f'{bestCumReward}')
+                rewardfile.close()
+
+                with open(f'{wdir}/control_train_r{rank}.pickle', 'wb') as f:
+                    pickle.dump(allDataControl, f)
+
+                with open(f'{wdir}/fieldU_train_r{rank}.pickle', 'wb') as f:
+                    pickle.dump(allDataUplane, f)
+
+                with open(f'{wdir}/fieldV_train_r{rank}.pickle', 'wb') as f:
+                    pickle.dump(allDataVplane, f)
+
+                with open(f'{wdir}/stress_train_r{rank}.pickle', 'wb') as f:
+                    pickle.dump(allDataStress, f)
+
+                with open(f'{wdir}/rewards_train_r{rank}.pickle', 'wb') as f:
+                    pickle.dump(np.array(rewards), f)
 
     except Exception as e:
 

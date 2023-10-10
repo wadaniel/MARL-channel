@@ -99,7 +99,7 @@ print(f"Hello from rank {rank}")
 
 args = parser.parse_args()
 args.workDir = "./../bin" #f"./_korali_vracer_single_{args.run}/"
-args.resDir = f"/scratch/wadaniel/MARL-channel/_korali_vracer_multi_{args.run}"
+args.resDir = f"/scratch/wadaniel/MARL-channel/_korali_vracer_multi_{args.ycoords}_{args.run}"
 args.concurrentWorkers = comm.Get_size() - 1
 
 if rank == 0:
@@ -197,7 +197,7 @@ e["Console Output"]["Verbosity"] = "Detailed"
 e["File Output"]["Enabled"] = True
 e["File Output"]["Use Multiple Files"] = False
 e["File Output"]["Frequency"] = 10
-e["File Output"]["Path"] = f"../_korali_vracer_multi_{args.run}/" #args.resDir
+e["File Output"]["Path"] = f"../_korali_vracer_multi_{args.ycoords}_{args.run}/" #args.resDir
 
 ###  Configuring the distributed conduit
 

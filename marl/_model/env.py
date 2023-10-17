@@ -76,10 +76,13 @@ def env(s, args):
         rewardfile = open(f"{wdir}/cumReward.dat","r")
         bestCumReward = float(rewardfile.read())
         rewardfile.close()
+        print(f"[env] Run testing generation in {wdir} (current best reward {bestCumReward})")
+
     elif os.path.exists(f"{wdir}/cumRewardTrain.dat"):
         rewardfile = open(f"{wdir}/cumRewardTrain.dat","r")
         bestCumReward = float(rewardfile.read())
         rewardfile.close()
+        print(f"[env] Run training generation in {wdir} (current best reward {bestCumReward})")
        
     os.chdir(wdir)
     wdir = os.getcwd()
@@ -94,7 +97,6 @@ def env(s, args):
 
     rewards = []
 
-    print(f"[env] Run testing generation in {wdir}")
     allDataUplane = np.empty((args.episodeLength, nz, nx))
     allDataVplane = np.empty((args.episodeLength, nz, nx))
     allDataControl = np.empty((args.episodeLength, nz, nx))
@@ -252,4 +254,8 @@ def env(s, args):
         subComm.Disconnect()
 
     end = time.time()
-    print(f"[env] Cumulative reward rank {rank}/{size}: {cumReward}, Took {end-start}s")
+
+    if testing:
+        print(f"[env] Cumulative testing reward rank {rank}/{size}: {cumReward}, Took {end-start}s")
+    else:
+        print(f"[env] Cumulative training reward rank {rank}/{size}: {cumReward}, Took {end-start}s")

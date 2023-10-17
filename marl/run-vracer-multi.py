@@ -225,9 +225,10 @@ if rank == 0:
     text_file = open(f"{args.resDir}/args.out", "w")
     text_file.write(str(args))
     text_file.close()
-    os.system(f"sed 's/SAMPLINGHEIGHT/{args.ycoords}/' {srcDir}bla_macro.i > {wdir}bla_macro.i")
-    os.system(f"sed 's/UINIT/init_16x65x16_minchan_00{rank}.u/' {wdir}bla_macro.i > {wdir}bla.i")
-    shutil.copy(srcDir + "bla_16x65x16_1", wdir)
+
+os.system(f"sed 's/SAMPLINGHEIGHT/{args.ycoords}/' {srcDir}bla_macro.i > {wdir}bla_macro.i")
+os.system(f"sed 's/UINIT/init_16x65x16_minchan_00{rank}.u/' {wdir}bla_macro.i > {wdir}bla.i")
+shutil.copy(srcDir + "bla_16x65x16_1", wdir)
 
 if args.concurrentWorkers > 1:
     MPI.COMM_WORLD.Barrier()

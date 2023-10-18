@@ -71,18 +71,24 @@ def env(s, args):
 
     testing = True if s["Mode"] == "Testing" else False
 
-    bestCumReward = -999
-    if testing and os.path.exists(f"{wdir}/cumReward.dat"):
-        rewardfile = open(f"{wdir}/cumReward.dat","r")
-        bestCumReward = float(rewardfile.read())
-        rewardfile.close()
+    bestCumReward = -999.
+
+    if testing:
+        if os.path.exists(f"{wdir}/cumReward.dat"):
+            rewardfile = open(f"{wdir}/cumReward.dat","r")
+            bestCumReward = float(rewardfile.read())
+            rewardfile.close()
+
         print(f"[env] Run testing generation in {wdir} (current best reward {bestCumReward})")
 
-    elif os.path.exists(f"{wdir}/cumRewardTrain.dat"):
-        rewardfile = open(f"{wdir}/cumRewardTrain.dat","r")
-        bestCumReward = float(rewardfile.read())
-        rewardfile.close()
+    else:
+        if os.path.exists(f"{wdir}/cumRewardTrain.dat"):
+            rewardfile = open(f"{wdir}/cumRewardTrain.dat","r")
+            bestCumReward = float(rewardfile.read())
+            rewardfile.close()
+
         print(f"[env] Run training generation in {wdir} (current best reward {bestCumReward})")
+    
        
     os.chdir(wdir)
     wdir = os.getcwd()

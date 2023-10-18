@@ -51,13 +51,20 @@ def get_color_from_colormap(value, colormap_name='viridis'):
 #        ['./../_falcon_korali_vracer_multi_3/sample0/stress_r0.pickle', './../_falcon_korali_vracer_multi_3/sample1/stress_r1.pickle', './../_falcon_korali_vracer_multi_3/sample2/stress_r2.pickle', './../_falcon_korali_vracer_multi_3/sample3/stress_r3.pickle', './../_falcon_korali_vracer_multi_3/sample4/stress_r4.pickle'] ]
 
 
-files = [ ['./../_korali_vracer_multi_-0.9988_1/sample0/stress_r0.pickle', './../_korali_vracer_multi_-0.9988_1/sample2/stress_r2.pickle' ], ['./../_korali_vracer_multi_-0.9988_2/sample0/stress_r0.pickle', './../_korali_vracer_multi_-0.9988_2/sample2/stress_r2.pickle' ]
+baseLine = [ './../runControl-0.88192126_u0/stress_v9.pickle', './../runControl-0.88192126_u1/stress_v9.pickle', './../runControl-0.88192126_u2/stress_v9.pickle', './../runControl-0.88192126_u3/stress_v9.pickle', './../runControl-0.88192126_u4/stress_v9.pickle']
+files = [ [ './../runControl-0.88192126_u0/stress_v7.pickle', './../runControl-0.88192126_u1/stress_v7.pickle', './../runControl-0.88192126_u2/stress_v7.pickle', './../runControl-0.88192126_u3/stress_v7.pickle', './../runControl-0.88192126_u4/stress_v7.pickle'] ]
 
 numsteps = 1000
 
 if __name__ == "__main__":
 
-    fName = f'stress.png'
+    baseStress = np.zeros((len(baseLine), numsteps))
+    for idx, f in enumerate(baseLine):
+        baseStress[idx,:] = loadStress(f)
+        baseMeanStress = np.mean(baseStress,axis=0)
+        baseStdStress = np.std(baseStress,axis=0)
+
+    fName = f'stressResults.png'
     fig, ax = plt.subplots(1,1)
 
     for fs in files:
@@ -68,12 +75,32 @@ if __name__ == "__main__":
         meanStress = np.mean(stress,axis=0)
         stdStress = np.std(stress,axis=0)
 
-
         ax.plot(np.arange(numsteps), meanStress, linestyle='-', lw=1) #, color='turquoise')
         ax.fill_between(np.arange(numsteps), meanStress+stdStress, meanStress-stdStress,alpha=0.2)
         ax.set_xticks(np.linspace(0,numsteps,5)) 
         ax.set_ylim([0.,7.]) 
 
+    plt.tight_layout()
+    plt.savefig(fName)
+
+    fName = f'dragReductionResults.png'
+    fig, ax = plt.subplots(1,1)
+
+    for fs in files:
+        stress = np.zeros((len(fs),numsteps))
+        for idx, f in enumerate(fs):
+            stress[idx,:] = loadStress(f)
+
+        meanStress = 100.*np.mean(1.-stress/baseStress,axis=0)
+        stdStress = 100.*np.std(1.-stress/baseMeanStress,axis=0)
+
+        print(meanStress)
+        ax.plot(np.arange(numsteps), meanStress, linestyle='-', lw=1) #, color='turquoise')
+        ax.fill_between(np.arange(numsteps), meanStress+stdStress, meanStress-stdStress,alpha=0.2)
+        ax.set_xticks(np.linspace(0,numsteps,5)) 
+        ax.set_ylim([0.,50.]) 
 
     plt.tight_layout()
     plt.savefig(fName)
+
+

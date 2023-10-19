@@ -52,8 +52,17 @@ def get_color_from_colormap(value, colormap_name='viridis'):
 
 
 baseLine = [ './../runControl-0.88192126_u0/stress_v9.pickle', './../runControl-0.88192126_u1/stress_v9.pickle', './../runControl-0.88192126_u2/stress_v9.pickle', './../runControl-0.88192126_u3/stress_v9.pickle', './../runControl-0.88192126_u4/stress_v9.pickle']
-files = [ [ './../runControl-0.88192126_u0/stress_v7.pickle', './../runControl-0.88192126_u1/stress_v7.pickle', './../runControl-0.88192126_u2/stress_v7.pickle', './../runControl-0.88192126_u3/stress_v7.pickle', './../runControl-0.88192126_u4/stress_v7.pickle'] ]
 
+files = [ 
+        [ './../runControl-0.88192126_u0/stress_v7.pickle', './../runControl-0.88192126_u1/stress_v7.pickle', './../runControl-0.88192126_u2/stress_v7.pickle', './../runControl-0.88192126_u3/stress_v7.pickle', './../runControl-0.88192126_u4/stress_v7.pickle'], 
+        [ './../_korali_vracer_multi_-0.9988_1/sample0/stress_train_r0.pickle', './../_korali_vracer_multi_-0.9988_1/sample1/stress_train_r1.pickle', './../_korali_vracer_multi_-0.9988_1/sample2/stress_train_r2.pickle', './../_korali_vracer_multi_-0.9988_1/sample3/stress_train_r3.pickle', './../_korali_vracer_multi_-0.9988_1/sample4/stress_train_r4.pickle'],
+        [ './../_korali_vracer_multi_-0.9988_2/sample0/stress_train_r0.pickle', './../_korali_vracer_multi_-0.9988_2/sample1/stress_train_r1.pickle', './../_korali_vracer_multi_-0.9988_2/sample2/stress_train_r2.pickle', './../_korali_vracer_multi_-0.9988_2/sample3/stress_train_r3.pickle', './../_korali_vracer_multi_-0.9988_2/sample4/stress_train_r4.pickle'],
+        [ './../_korali_vracer_multi_-0.9988_3/sample0/stress_train_r0.pickle', './../_korali_vracer_multi_-0.9988_3/sample1/stress_train_r1.pickle', './../_korali_vracer_multi_-0.9988_3/sample2/stress_train_r2.pickle', './../_korali_vracer_multi_-0.9988_3/sample3/stress_train_r3.pickle', './../_korali_vracer_multi_-0.9988_3/sample4/stress_train_r4.pickle'],
+#        [ './../_korali_vracer_multi_-0.9988_4/sample0/stress_train_r0.pickle', './../_korali_vracer_multi_-0.9988_4/sample1/stress_train_r1.pickle', './../_korali_vracer_multi_-0.9988_4/sample2/stress_train_r2.pickle', './../_korali_vracer_multi_-0.9988_4/sample3/stress_train_r3.pickle', './../_korali_vracer_multi_-0.9988_4/sample4/stress_train_r4.pickle'],
+        [ './../_korali_vracer_multi_-0.9988_5/sample0/stress_train_r0.pickle', './../_korali_vracer_multi_-0.9988_5/sample1/stress_train_r1.pickle', './../_korali_vracer_multi_-0.9988_5/sample2/stress_train_r2.pickle', './../_korali_vracer_multi_-0.9988_5/sample3/stress_train_r3.pickle', './../_korali_vracer_multi_-0.9988_5/sample4/stress_train_r4.pickle'] 
+        ]
+    
+    
 numsteps = 1000
 
 if __name__ == "__main__":
@@ -87,20 +96,23 @@ if __name__ == "__main__":
     fig, ax = plt.subplots(1,1)
 
     for fs in files:
-        stress = np.zeros((len(fs),numsteps))
+        reduction = np.zeros((len(fs),numsteps))
         for idx, f in enumerate(fs):
-            stress[idx,:] = loadStress(f)
+            stress = loadStress(f)
+            #reduction[idx,:] = stress
+            reduction [idx,:] = 100.*(1.-stress/baseStress[idx,:])
 
-        meanStress = 100.*np.mean(1.-stress/baseStress,axis=0)
-        stdStress = 100.*np.std(1.-stress/baseMeanStress,axis=0)
+        #meanReduction = 100.*np.mean(1.-reduction/baseStress,axis=0)
+        meanReduction = np.mean(reduction,axis=0) #100.*np.mean(1.-reduction/baseStress,axis=0)
+        #stdReduction = 100.*np.std(1.-reduction/baseMeanStress,axis=0)
+        stdReduction = np.std(reduction,axis=0) #100.*np.std(1.-reduction/baseMeanStress,axis=0)
 
-        print(meanStress)
-        ax.plot(np.arange(numsteps), meanStress, linestyle='-', lw=1) #, color='turquoise')
-        ax.fill_between(np.arange(numsteps), meanStress+stdStress, meanStress-stdStress,alpha=0.2)
+        print(meanReduction)
+        ax.plot(np.arange(numsteps), meanReduction, linestyle='-', lw=1) #, color='turquoise')
+        ax.fill_between(np.arange(numsteps), meanReduction+stdReduction, meanReduction-stdReduction,alpha=0.2)
         ax.set_xticks(np.linspace(0,numsteps,5)) 
-        ax.set_ylim([0.,50.]) 
+        ax.set_ylim([-75.,75.]) 
+        ax.set_box_aspect(1)
 
     plt.tight_layout()
     plt.savefig(fName)
-
-

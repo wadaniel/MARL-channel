@@ -58,7 +58,7 @@ files = [
         [ './../_korali_vracer_multi_-0.9988_1/sample0/stress_train_r0.pickle', './../_korali_vracer_multi_-0.9988_1/sample1/stress_train_r1.pickle', './../_korali_vracer_multi_-0.9988_1/sample2/stress_train_r2.pickle', './../_korali_vracer_multi_-0.9988_1/sample3/stress_train_r3.pickle', './../_korali_vracer_multi_-0.9988_1/sample4/stress_train_r4.pickle'],
         [ './../_korali_vracer_multi_-0.9988_2/sample0/stress_train_r0.pickle', './../_korali_vracer_multi_-0.9988_2/sample1/stress_train_r1.pickle', './../_korali_vracer_multi_-0.9988_2/sample2/stress_train_r2.pickle', './../_korali_vracer_multi_-0.9988_2/sample3/stress_train_r3.pickle', './../_korali_vracer_multi_-0.9988_2/sample4/stress_train_r4.pickle'],
         [ './../_korali_vracer_multi_-0.9988_3/sample0/stress_train_r0.pickle', './../_korali_vracer_multi_-0.9988_3/sample1/stress_train_r1.pickle', './../_korali_vracer_multi_-0.9988_3/sample2/stress_train_r2.pickle', './../_korali_vracer_multi_-0.9988_3/sample3/stress_train_r3.pickle', './../_korali_vracer_multi_-0.9988_3/sample4/stress_train_r4.pickle'],
-#        [ './../_korali_vracer_multi_-0.9988_4/sample0/stress_train_r0.pickle', './../_korali_vracer_multi_-0.9988_4/sample1/stress_train_r1.pickle', './../_korali_vracer_multi_-0.9988_4/sample2/stress_train_r2.pickle', './../_korali_vracer_multi_-0.9988_4/sample3/stress_train_r3.pickle', './../_korali_vracer_multi_-0.9988_4/sample4/stress_train_r4.pickle'],
+#        [ './../_korali_vracer_multi_-0.9988_4a/sample0/stress_train_r0.pickle', './../_korali_vracer_multi_-0.9988_4a/sample1/stress_train_r1.pickle', './../_korali_vracer_multi_-0.9988_4a/sample2/stress_train_r2.pickle', './../_korali_vracer_multi_-0.9988_4a/sample3/stress_train_r3.pickle', './../_korali_vracer_multi_-0.9988_4a/sample4/stress_train_r4.pickle'],
         [ './../_korali_vracer_multi_-0.9988_5/sample0/stress_train_r0.pickle', './../_korali_vracer_multi_-0.9988_5/sample1/stress_train_r1.pickle', './../_korali_vracer_multi_-0.9988_5/sample2/stress_train_r2.pickle', './../_korali_vracer_multi_-0.9988_5/sample3/stress_train_r3.pickle', './../_korali_vracer_multi_-0.9988_5/sample4/stress_train_r4.pickle'] 
         ]
     
@@ -73,7 +73,7 @@ if __name__ == "__main__":
         baseMeanStress = np.mean(baseStress,axis=0)
         baseStdStress = np.std(baseStress,axis=0)
 
-    fName = f'stressResults.png'
+    fName = f'stressResults.pdf'
     fig, ax = plt.subplots(1,1)
 
     for fs in files:
@@ -92,7 +92,7 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.savefig(fName)
 
-    fName = f'dragReductionResults.png'
+    fName = f'dragReductionResults.pdf'
     fig, ax = plt.subplots(1,1)
 
     for fs in files:

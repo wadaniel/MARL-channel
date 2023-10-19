@@ -44,7 +44,8 @@ def get_color_from_colormap(value, colormap_name='viridis'):
 
 baseLine = [ './../runControl-0.88192126_u0/stress_v9.pickle', './../runControl-0.88192126_u1/stress_v9.pickle', './../runControl-0.88192126_u2/stress_v9.pickle', './../runControl-0.88192126_u3/stress_v9.pickle', './../runControl-0.88192126_u4/stress_v9.pickle']
 
-ycoord = -0.9988
+#ycoord = -0.9988
+ycoord = -0.83146961
 
 files = [ 
         [ './../runControl-0.88192126_u0/stress_v7.pickle', './../runControl-0.88192126_u1/stress_v7.pickle', './../runControl-0.88192126_u2/stress_v7.pickle', './../runControl-0.88192126_u3/stress_v7.pickle', './../runControl-0.88192126_u4/stress_v7.pickle'], 
@@ -54,6 +55,8 @@ files = [
 #        [ './../_korali_vracer_multi_{ycoord}_4a/sample0/stress_train_r0.pickle', './../_korali_vracer_multi_{ycoord}_4a/sample1/stress_train_r1.pickle', './../_korali_vracer_multi_{ycoord}_4a/sample2/stress_train_r2.pickle', './../_korali_vracer_multi_{ycoord}_4a/sample3/stress_train_r3.pickle', './../_korali_vracer_multi_{ycoord}_4a/sample4/stress_train_r4.pickle'],
         [ f'./../_korali_vracer_multi_{ycoord}_5/sample0/stress_train_r0.pickle', f'./../_korali_vracer_multi_{ycoord}_5/sample1/stress_train_r1.pickle', f'./../_korali_vracer_multi_{ycoord}_5/sample2/stress_train_r2.pickle', f'./../_korali_vracer_multi_{ycoord}_5/sample3/stress_train_r3.pickle', f'./../_korali_vracer_multi_{ycoord}_5/sample4/stress_train_r4.pickle'] 
         ]
+
+labels = [ 'Opposition Control', 'DRL 1 Agent', 'DRL 2 Agents', 'DRL 4 Agents', 'DRL 8 Agents' ]
     
 numsteps = 1000
 
@@ -88,7 +91,7 @@ if __name__ == "__main__":
     fName = f'dragReductionResults.pdf'
     fig, ax = plt.subplots(1,1)
 
-    for fs in files:
+    for idx, fs in enumerate(files):
         print(fs)
         reduction = np.zeros((len(fs),numsteps))
         for idx, f in enumerate(fs):
@@ -103,10 +106,12 @@ if __name__ == "__main__":
         stdReduction = np.std(reduction,axis=0) #100.*np.std(1.-reduction/baseMeanStress,axis=0)
 
         ax.plot(np.arange(numsteps), meanReduction, linestyle='-', lw=1) #, color='turquoise')
-        ax.fill_between(np.arange(numsteps), meanReduction+stdReduction, meanReduction-stdReduction,alpha=0.2)
-        ax.set_xticks(np.linspace(0,numsteps,5)) 
-        ax.set_ylim([-75.,75.]) 
-        ax.set_box_aspect(1)
+        ax.fill_between(np.arange(numsteps), meanReduction+stdReduction, meanReduction-stdReduction,alpha=0.2, label=labels[idx])
+    
+    ax.set_xticks(np.linspace(0,numsteps,5)) 
+    ax.set_ylim([-75.,75.]) 
+    #ax.set_box_aspect(1)
+    ax.legend()
 
     plt.tight_layout()
     plt.savefig(fName)

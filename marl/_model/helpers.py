@@ -36,7 +36,7 @@ def field_to_state(field, nagx, nagz, compression=1):
         return stateList
 
 
-def action_to_control(action, nagx, nagz, nctrlx, nctrlz, compression=1):
+def action_to_control(action, field, nagx, nagz, nctrlx, nctrlz, compression=1, mode=0):
     na = nagx*nagz
     if na == 1:
         control = np.reshape(action,(nctrlz//compression, nctrlx//compression))
@@ -53,7 +53,7 @@ def action_to_control(action, nagx, nagz, nctrlx, nctrlz, compression=1):
 
 
     if compression == 1:
-        return control
+        controlt = control
 
     else:
         controlt = np.zeros((nctrlz, nctrlx))
@@ -61,7 +61,15 @@ def action_to_control(action, nagx, nagz, nctrlx, nctrlz, compression=1):
             for j in range(nctrlx//compression):
                 controlt[i*compression:(i+1)*compression, j*compression:(j+1)*compression] = control[i,j]
 
+        
+    if mode == 0:
         return controlt
+    elif mode == 1:
+        assert controlt.shape == field[0,:,:].shape
+        return controlt - field[0,:,:]
+    else:
+        print(f"[helper] mode {mode} not recognized")
+        sys.exit()
             
         
 def field_to_reward(field,nagx,nagz,nz,nx,baseline_dudy):

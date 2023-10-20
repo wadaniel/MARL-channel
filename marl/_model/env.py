@@ -30,6 +30,7 @@ opposition_dudy_dict = {"180_16x65x16"   : 3.7398798426242075,
 retau = 180
 #baseline_dudy = opposition_dudy_dict[f"{int(retau)}_{nx}x{ny}x{nz}"]
 baseline_dudy = 3.671
+maxv = 0.04285714285714286
 
 wbci = 7
 nctrlx = 16
@@ -69,6 +70,7 @@ def env(s, args):
     compression = args.compression
     wdir = f"{args.resDir}/sample{rank}/"
 
+    mode = int(s["Custom Settings"]["Mode"])
     testing = True if s["Mode"] == "Testing" else False
 
     bestCumReward = -999.
@@ -135,8 +137,10 @@ def env(s, args):
         
             # Retrieve control from korali
             action = s["Action"] 
-            control = action_to_control(action, args.nagx, args.nagz, nctrlx, nctrlz, compression)
+            control = action_to_control(action, field, args.nagx, args.nagz, nctrlx, nctrlz, compression, mode)
             control -= np.mean(control)
+            control = np.clip(control, a_min=-maxv, a_max=maxv)
+            #assert (np.abs(control) < 3.*maxv).all(), f"sth wrong with action magnitude {control}" 
 
             #print("Python sending control to Fortran")
             subComm.Send([requestControl, MPI.CHARACTER], dest=0, tag=maxProc+100)
@@ -187,10 +191,10 @@ def env(s, args):
             step = step + 1
 
             # store data
-            allDataControl[step-1, :, :] = control
-            allDataVplane[step-1, :, :] = field[0, :, :]
-            allDataUplane[step-1, :, :] = field[1, :, :]
-            allDataStress[step-1, :, :] = uxzAvg
+            allDataControl[step-1, :, :] = control.copy()
+            allDataVplane[step-1, :, :] = field[0, :, :].copy()
+            allDataUplane[step-1, :, :] = field[1, :, :].copy()
+            allDataStress[step-1, :, :] = uxzAvg.copy()
 
             """
             # console output

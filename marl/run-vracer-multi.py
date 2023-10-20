@@ -82,6 +82,12 @@ parser.add_argument(
     type=float,
     required=False)
 parser.add_argument(
+    '--mode',
+    help='Action mode',
+    default=0,
+    type=int,
+    required=False)
+parser.add_argument(
     '--run',
     help='Run tag',
     default=0,
@@ -99,7 +105,7 @@ print(f"Hello from rank {rank}")
 
 args = parser.parse_args()
 args.workDir = "./../bin" #f"./_korali_vracer_single_{args.run}/"
-args.resDir = f"/scratch/wadaniel/MARL-channel/_korali_vracer_multi_{args.ycoords}_{args.run}"
+args.resDir = f"/scratch/wadaniel/MARL-channel/_korali_vracer_multi_{args.ycoords}_{args.mode}_{args.run}"
 args.concurrentWorkers = comm.Get_size() - 1
 
 if rank == 0:
@@ -125,6 +131,7 @@ e["Problem"]["Environment Function"] = lambda s : env(s, args)
 e["Problem"]["Testing Frequency"] = 5
 e["Problem"]["Policy Testing Episodes"] = 1
 e["Problem"]["Agents Per Environment"] = args.nagx*args.nagz
+e["Problem"]["Custom Settings"]["Mode"] = str(args.mode)
 
 assert args.nx/args.compression % args.nagx == 0
 assert args.nz/args.compression % args.nagz == 0
@@ -146,7 +153,7 @@ for a in range(nState, nState+nAct):
     e["Variables"][a]["Type"] = "Action"
     e["Variables"][a]["Lower Bound"] = -maxv
     e["Variables"][a]["Upper Bound"] = +maxv
-    e["Variables"][a]["Initial Exploration Noise"] = 2.*maxv
+    e["Variables"][a]["Initial Exploration Noise"] = maxv
 
 ### Defining Agent Configuration 
 
@@ -197,7 +204,7 @@ e["Console Output"]["Verbosity"] = "Detailed"
 e["File Output"]["Enabled"] = True
 e["File Output"]["Use Multiple Files"] = False
 e["File Output"]["Frequency"] = 10
-e["File Output"]["Path"] = f"../_korali_vracer_multi_{args.ycoords}_{args.run}/" #args.resDir
+e["File Output"]["Path"] = f"../_korali_vracer_multi_{args.ycoords}_{args.mode}_{args.run}/" #args.resDir
 
 ###  Configuring the distributed conduit
 
@@ -233,7 +240,9 @@ shutil.copy(srcDir + "bla_16x65x16_1", wdir)
 if args.concurrentWorkers > 1:
     MPI.COMM_WORLD.Barrier()
 
+print(f'[run_vracer_multi] launch training (rank {rank})')
+
 ### Running Experiment
 k.run(e)
 
-print(f'[run_vracer_multi] training finished with args {args}')
+print(f'[run_vracer_multi] training finished (rank {rank}) with args {args}')

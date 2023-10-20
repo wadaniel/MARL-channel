@@ -51,8 +51,8 @@ def get_color_from_colormap(value, colormap_name='viridis'):
 baseLine = [ './../runControl-0.88192126_u0/stress_v9.pickle', './../runControl-0.88192126_u1/stress_v9.pickle', './../runControl-0.88192126_u2/stress_v9.pickle', './../runControl-0.88192126_u3/stress_v9.pickle', './../runControl-0.88192126_u4/stress_v9.pickle']
 baseLineV = [ './../runControl-0.88192126_u0/fieldV_v9.pickle', './../runControl-0.88192126_u1/fieldV_v9.pickle', './../runControl-0.88192126_u2/fieldV_v9.pickle', './../runControl-0.88192126_u3/fieldV_v9.pickle', './../runControl-0.88192126_u4/fieldV_v9.pickle']
 
-ycoord = -0.9988
-#ycoord = -0.83146961
+#ycoord = -0.9988
+ycoord = -0.83146961
 
 files = [ 
         [ './../runControl-0.88192126_u0/stress_v7.pickle', './../runControl-0.88192126_u1/stress_v7.pickle', './../runControl-0.88192126_u2/stress_v7.pickle', './../runControl-0.88192126_u3/stress_v7.pickle', './../runControl-0.88192126_u4/stress_v7.pickle'], 
@@ -130,7 +130,7 @@ if __name__ == "__main__":
     ax.set_xticks(np.linspace(0,numsteps,5)) 
     ax.set_ylim([-75.,75.])
     #ax.set_aspect('box')
-    ax.set_box_aspect(1)
+    #ax.set_box_aspect(1)
     ax.legend()
 
     plt.tight_layout()
@@ -152,7 +152,7 @@ if __name__ == "__main__":
 
             fName = f'control_s{idx}_v{fidx}.pdf'
             fig, ax = plt.subplots(4,1)
-            ax[0].plot(np.arange(numsteps), controlA, linestyle='-', lw=1, color='turquoise')
+            ax[0].plot(np.arange(numsteps), controlA, linestyle='-', lw=1, color='mediumturquoise')
             ax[0].set_xticks(np.arange(0,numsteps,500)) 
             ax[0].set_xticklabels([]) 
             #ax[0].set_ylim([-0.1,0.1]) 
@@ -160,6 +160,16 @@ if __name__ == "__main__":
             ax[1].plot(np.arange(numsteps), controlB, linestyle='-', lw=1, color='mediumturquoise')
             ax[1].set_xticks(np.arange(0,numsteps,500)) 
             ax[1].set_xticklabels([]) 
+            #ax[1].set_ylim([-0.1,0.1]) 
+
+            ax[2].plot(np.arange(numsteps), controlC, linestyle='-', lw=1, color='mediumturquoise')
+            ax[2].set_xticks(np.arange(0,numsteps,500)) 
+            ax[2].set_xticklabels([]) 
+            #ax[1].set_ylim([-0.1,0.1]) 
+
+            ax[3].plot(np.arange(numsteps), controlC, linestyle='-', lw=1, color='mediumturquoise')
+            ax[3].set_xticks(np.arange(0,numsteps,500)) 
+            ax[3].set_xticklabels([]) 
             #ax[1].set_ylim([-0.1,0.1]) 
 
             plt.tight_layout()

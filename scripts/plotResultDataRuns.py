@@ -53,6 +53,7 @@ baseLineV = [ './../runControl-0.88192126_u0/fieldV_v9.pickle', './../runControl
 
 #ycoord = -0.9988
 ycoord = -0.83146961
+legend = False
 
 files = [ 
         [ './../runControl-0.88192126_u0/stress_v7.pickle', './../runControl-0.88192126_u1/stress_v7.pickle', './../runControl-0.88192126_u2/stress_v7.pickle', './../runControl-0.88192126_u3/stress_v7.pickle', './../runControl-0.88192126_u4/stress_v7.pickle'], 
@@ -111,7 +112,11 @@ if __name__ == "__main__":
     plt.close("all")
 
     ###########################################################################
-    fName = f'dragReductionResults.pdf'
+    if legend:
+        fName = f'dragReductionResults_{ycoord}.pdf'
+    else:
+        fName = f'dragReductionResultsNoLeg_{ycoord}.pdf'
+
     fig, ax = plt.subplots(1,1)
 
     for fidx, fs in enumerate(files):
@@ -131,7 +136,9 @@ if __name__ == "__main__":
     ax.set_ylim([-75.,75.])
     #ax.set_aspect('box')
     #ax.set_box_aspect(1)
-    ax.legend()
+    if legend:
+        ax.legend()
+    #plt.axis("square")
 
     plt.tight_layout()
     plt.savefig(fName)

@@ -1,4 +1,3 @@
-import sys
 import pickle
 import matplotlib
 matplotlib.use('Agg')
@@ -56,35 +55,26 @@ baseLineV = [ './../runControl-0.88192126_u0/fieldV_v9.pickle', './../runControl
 #ycoord = -0.9988
 ycoord = -0.83146961
 legend = False
-plotControl = False
 tp = 0.6
 #maxv = 0.04285714285714286
 maxv = 0.05 
 
 files = [ 
         [ './../runControl-0.88192126_u0/stress_v7.pickle', './../runControl-0.88192126_u1/stress_v7.pickle', './../runControl-0.88192126_u2/stress_v7.pickle', './../runControl-0.88192126_u3/stress_v7.pickle', './../runControl-0.88192126_u4/stress_v7.pickle'], 
-        [ f'./../_korali_vracer_multi_{ycoord}_1/sample0/stress_train_r0.pickle', f'./../_korali_vracer_multi_{ycoord}_1/sample1/stress_train_r1.pickle', f'./../_korali_vracer_multi_{ycoord}_1/sample2/stress_train_r2.pickle', f'./../_korali_vracer_multi_{ycoord}_1/sample3/stress_train_r3.pickle', f'./../_korali_vracer_multi_{ycoord}_1/sample4/stress_train_r4.pickle'],
-        [ f'./../_korali_vracer_multi_{ycoord}_2/sample0/stress_train_r0.pickle', f'./../_korali_vracer_multi_{ycoord}_2/sample1/stress_train_r1.pickle', f'./../_korali_vracer_multi_{ycoord}_2/sample2/stress_train_r2.pickle', f'./../_korali_vracer_multi_{ycoord}_2/sample3/stress_train_r3.pickle', f'./../_korali_vracer_multi_{ycoord}_2/sample4/stress_train_r4.pickle'],
-        [ f'./../_korali_vracer_multi_{ycoord}_3/sample0/stress_train_r0.pickle', f'./../_korali_vracer_multi_{ycoord}_3/sample1/stress_train_r1.pickle', f'./../_korali_vracer_multi_{ycoord}_3/sample2/stress_train_r2.pickle', f'./../_korali_vracer_multi_{ycoord}_3/sample3/stress_train_r3.pickle', f'./../_korali_vracer_multi_{ycoord}_3/sample4/stress_train_r4.pickle'],
-#        [ './../_korali_vracer_multi_{ycoord}_4a/sample0/stress_train_r0.pickle', './../_korali_vracer_multi_{ycoord}_4a/sample1/stress_train_r1.pickle', './../_korali_vracer_multi_{ycoord}_4a/sample2/stress_train_r2.pickle', './../_korali_vracer_multi_{ycoord}_4a/sample3/stress_train_r3.pickle', './../_korali_vracer_multi_{ycoord}_4a/sample4/stress_train_r4.pickle'],
-        [ f'./../_korali_vracer_multi_{ycoord}_5/sample0/stress_train_r0.pickle', f'./../_korali_vracer_multi_{ycoord}_5/sample1/stress_train_r1.pickle', f'./../_korali_vracer_multi_{ycoord}_5/sample2/stress_train_r2.pickle', f'./../_korali_vracer_multi_{ycoord}_5/sample3/stress_train_r3.pickle', f'./../_korali_vracer_multi_{ycoord}_5/sample4/stress_train_r4.pickle'] 
+        [ f'./../_korali_vracer_multi_{ycoord}_5/sample0/stress_train_r0.pickle', f'./../_korali_vracer_multi_{ycoord}_5/sample1/stress_train_r1.pickle', f'./../_korali_vracer_multi_{ycoord}_5/sample2/stress_train_r2.pickle', f'./../_korali_vracer_multi_{ycoord}_5/sample3/stress_train_r3.pickle', f'./../_korali_vracer_multi_{ycoord}_5/sample4/stress_train_r4.pickle'],
+
+        [ f'./../_korali_vracer_multi_{ycoord}_5/sample0/stress_r0.pickle', f'./../_korali_vracer_multi_{ycoord}_5/sample2/stress_r2.pickle', f'./../_korali_vracer_multi_{ycoord}_5/sample4/stress_r4.pickle'] 
         ]
 
 filesControl = [ 
         [ './../runControl-0.88192126_u0/control_v7.pickle', './../runControl-0.88192126_u1/control_v7.pickle', './../runControl-0.88192126_u2/control_v7.pickle', './../runControl-0.88192126_u3/control_v7.pickle', './../runControl-0.88192126_u4/control_v7.pickle'], 
-        [ f'./../_korali_vracer_multi_{ycoord}_1/sample0/control_train_r0.pickle', f'./../_korali_vracer_multi_{ycoord}_1/sample1/control_train_r1.pickle', f'./../_korali_vracer_multi_{ycoord}_1/sample2/control_train_r2.pickle', f'./../_korali_vracer_multi_{ycoord}_1/sample3/control_train_r3.pickle', f'./../_korali_vracer_multi_{ycoord}_1/sample4/control_train_r4.pickle'],
-        [ f'./../_korali_vracer_multi_{ycoord}_2/sample0/control_train_r0.pickle', f'./../_korali_vracer_multi_{ycoord}_2/sample1/control_train_r1.pickle', f'./../_korali_vracer_multi_{ycoord}_2/sample2/control_train_r2.pickle', f'./../_korali_vracer_multi_{ycoord}_2/sample3/control_train_r3.pickle', f'./../_korali_vracer_multi_{ycoord}_2/sample4/control_train_r4.pickle'],
-        [ f'./../_korali_vracer_multi_{ycoord}_3/sample0/control_train_r0.pickle', f'./../_korali_vracer_multi_{ycoord}_3/sample1/control_train_r1.pickle', f'./../_korali_vracer_multi_{ycoord}_3/sample2/control_train_r2.pickle', f'./../_korali_vracer_multi_{ycoord}_3/sample3/control_train_r3.pickle', f'./../_korali_vracer_multi_{ycoord}_3/sample4/control_train_r4.pickle'],
-#        [ './../_korali_vracer_multi_{ycoord}_4a/sample0/control_train_r0.pickle', './../_korali_vracer_multi_{ycoord}_4a/sample1/control_train_r1.pickle', './../_korali_vracer_multi_{ycoord}_4a/sample2/control_train_r2.pickle', './../_korali_vracer_multi_{ycoord}_4a/sample3/control_train_r3.pickle', './../_korali_vracer_multi_{ycoord}_4a/sample4/control_train_r4.pickle'],
-        [ f'./../_korali_vracer_multi_{ycoord}_5/sample0/control_train_r0.pickle', f'./../_korali_vracer_multi_{ycoord}_5/sample1/control_train_r1.pickle', f'./../_korali_vracer_multi_{ycoord}_5/sample2/control_train_r2.pickle', f'./../_korali_vracer_multi_{ycoord}_5/sample3/control_train_r3.pickle', f'./../_korali_vracer_multi_{ycoord}_5/sample4/control_train_r4.pickle'] 
+        [ f'./../_korali_vracer_multi_{ycoord}_5/sample0/control_train_r0.pickle', f'./../_korali_vracer_multi_{ycoord}_5/sample1/control_train_r1.pickle', f'./../_korali_vracer_multi_{ycoord}_5/sample2/control_train_r2.pickle', f'./../_korali_vracer_multi_{ycoord}_5/sample3/control_train_r3.pickle', f'./../_korali_vracer_multi_{ycoord}_5/sample4/control_train_r4.pickle'],
+        [ f'./../_korali_vracer_multi_{ycoord}_5/sample0/control_r0.pickle', f'./../_korali_vracer_multi_{ycoord}_5/sample2/control_r2.pickle', f'./../_korali_vracer_multi_{ycoord}_5/sample4/control_r4.pickle'] 
         ]
 
+colorIdx = [0, 4, 6]
 
-#        [ f'./../_korali_vracer_multi_{ycoord}_1_4/sample0/control_train_r0.pickle', f'./../_korali_vracer_multi_{ycoord}_1_4/sample1/control_train_r1.pickle', f'./../_korali_vracer_multi_{ycoord}_1_4/sample2/control_train_r2.pickle', f'./../_korali_vracer_multi_{ycoord}_1_4/sample3/control_train_r3.pickle', f'./../_korali_vracer_multi_{ycoord}_1_4/sample4/control_train_r4.pickle'] 
-#       ]
-
-
-labels = [ 'Opposition Control', 'DRL 1 Agent', 'DRL 4 Agents', 'DRL 16 Agents', 'DRL 64 Agents' ]
+labels = [ 'Opposition Control', 'DRL 64 Agents Stochastic', 'DRL 64 Agents Deterministic']
     
 nx = 16
 ny = 16
@@ -125,18 +115,19 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.savefig(fName)
     plt.close("all")
+    print(f"figure {fName} saved")
 
     ###########################################################################
     if legend:
-        fName = f'dragReductionResults_{ycoord}.pdf'
+        fName = f'dragReductionCompareResults_{ycoord}.pdf'
     else:
-        fName = f'dragReductionResultsNoLeg_{ycoord}.pdf'
+        fName = f'dragReductionCompareResultsNoLeg_{ycoord}.pdf'
 
     fig, ax = plt.subplots(1,1)
 
     for fidx, fs in enumerate(files):
         print(fs)
-        color = get_color_from_colormap(fidx)
+        color = get_color_from_colormap(colorIdx[fidx])
         reduction = np.zeros((len(fs),numsteps))
         for idx, f in enumerate(fs):
             stress = loadStress(f)
@@ -161,18 +152,16 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.savefig(fName)
     plt.close("all") 
+    print(f"figure {fName} saved")
 
     ###########################################################################
-    if plotControl == False:
-        sys.exit()
-
     fig, ax = plt.subplots(1,1)
 
     for fidx, fs in enumerate(filesControl):
         print(fs)
         reduction = np.zeros((len(fs),numsteps))
 
-        color = get_color_from_colormap(fidx)
+        color = get_color_from_colormap(colorIdx[fidx])
         for idx, f in enumerate(fs):
             control = loadControl(f)
             controlA = control[:,0,0]
@@ -180,7 +169,7 @@ if __name__ == "__main__":
             controlC = control[:,10,10]
             controlD = control[:,15,15]
             
-            fName = f'control_s{idx}_v{fidx}.pdf'
+            fName = f'control_compare_s{idx}_v{fidx}.pdf'
             fig, ax = plt.subplots(4,1)
             ax[0].plot(xaxis, controlA, linestyle='-', lw=1, color=color)
             ax[0].set_xticks(xticks)

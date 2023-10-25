@@ -54,6 +54,9 @@ baseLineV = [ './../runControl-0.88192126_u0/fieldV_v9.pickle', './../runControl
 #ycoord = -0.9988
 ycoord = -0.83146961
 legend = False
+tp = 0.6
+#maxv = 0.04285714285714286
+maxv = 0.05 
 
 files = [ 
         [ './../runControl-0.88192126_u0/stress_v7.pickle', './../runControl-0.88192126_u1/stress_v7.pickle', './../runControl-0.88192126_u2/stress_v7.pickle', './../runControl-0.88192126_u3/stress_v7.pickle', './../runControl-0.88192126_u4/stress_v7.pickle'], 
@@ -72,6 +75,10 @@ filesControl = [
 #        [ './../_korali_vracer_multi_{ycoord}_4a/sample0/control_train_r0.pickle', './../_korali_vracer_multi_{ycoord}_4a/sample1/control_train_r1.pickle', './../_korali_vracer_multi_{ycoord}_4a/sample2/control_train_r2.pickle', './../_korali_vracer_multi_{ycoord}_4a/sample3/control_train_r3.pickle', './../_korali_vracer_multi_{ycoord}_4a/sample4/control_train_r4.pickle'],
         [ f'./../_korali_vracer_multi_{ycoord}_5/sample0/control_train_r0.pickle', f'./../_korali_vracer_multi_{ycoord}_5/sample1/control_train_r1.pickle', f'./../_korali_vracer_multi_{ycoord}_5/sample2/control_train_r2.pickle', f'./../_korali_vracer_multi_{ycoord}_5/sample3/control_train_r3.pickle', f'./../_korali_vracer_multi_{ycoord}_5/sample4/control_train_r4.pickle'] 
         ]
+
+
+#        [ f'./../_korali_vracer_multi_{ycoord}_1_4/sample0/control_train_r0.pickle', f'./../_korali_vracer_multi_{ycoord}_1_4/sample1/control_train_r1.pickle', f'./../_korali_vracer_multi_{ycoord}_1_4/sample2/control_train_r2.pickle', f'./../_korali_vracer_multi_{ycoord}_1_4/sample3/control_train_r3.pickle', f'./../_korali_vracer_multi_{ycoord}_1_4/sample4/control_train_r4.pickle'] 
+#       ]
 
 
 labels = [ 'Opposition Control', 'DRL 1 Agent', 'DRL 2 Agents', 'DRL 4 Agents', 'DRL 8 Agents' ]
@@ -93,6 +100,11 @@ if __name__ == "__main__":
     fName = f'stressResults.pdf'
     fig, ax = plt.subplots(1,1)
 
+    xaxis = np.arange(numsteps)*tp
+    xticks = np.linspace(0, numsteps*tp, 5)
+    yaxis = [-0.6, -0.4, -0.2, 0.0, 0.2, 0.4, 0.6]
+    yticks = ['{:,.0%}'.format(y) for y in yaxis]
+
     for fs in files:
         print(fs)
         stress = np.zeros((len(fs),numsteps))
@@ -102,9 +114,9 @@ if __name__ == "__main__":
         meanStress = np.mean(stress,axis=0)
         stdStress = np.std(stress,axis=0)
 
-        ax.plot(np.arange(numsteps), meanStress, linestyle='-', lw=1) #, color='turquoise')
-        ax.fill_between(np.arange(numsteps), meanStress+stdStress, meanStress-stdStress,alpha=0.2)
-        ax.set_xticks(np.linspace(0,numsteps,5)) 
+        ax.plot(xaxis, meanStress, linestyle='-', lw=1) #, color='turquoise')
+        ax.fill_between(xaxis, meanStress+stdStress, meanStress-stdStress,alpha=0.2)
+        ax.set_xticks(xticks)
         ax.set_ylim([0.,7.]) 
 
     plt.tight_layout()
@@ -124,16 +136,18 @@ if __name__ == "__main__":
         reduction = np.zeros((len(fs),numsteps))
         for idx, f in enumerate(fs):
             stress = loadStress(f)
-            reduction [idx,:] = 100.*(1.-stress/baseStress[idx,:])
+            reduction [idx,:] = (1.-stress/baseStress[idx,:])
 
         meanReduction = np.mean(reduction,axis=0) 
         stdReduction = np.std(reduction,axis=0) 
 
-        ax.plot(np.arange(numsteps), meanReduction, linestyle='-', lw=1) #, color='turquoise')
-        ax.fill_between(np.arange(numsteps), meanReduction+stdReduction, meanReduction-stdReduction,alpha=0.2, label=labels[fidx])
+        ax.plot(xaxis, meanReduction, linestyle='-', lw=1) #, color='turquoise')
+        ax.fill_between(xaxis, meanReduction+stdReduction, meanReduction-stdReduction,alpha=0.2, label=labels[fidx])
     
-    ax.set_xticks(np.linspace(0,numsteps,5)) 
-    ax.set_ylim([-75.,75.])
+    ax.set_xticks(xticks)
+    ax.set_yticks(yaxis)
+    ax.set_yticklabels(yticks)
+    #ax.set_ylim([-75.,75.])
     #ax.set_aspect('box')
     #ax.set_box_aspect(1)
     if legend:
@@ -147,7 +161,7 @@ if __name__ == "__main__":
     ###########################################################################
     fig, ax = plt.subplots(1,1)
 
-    for fidx, fs in enumerate(files):
+    for fidx, fs in enumerate(filesControl):
         print(fs)
         reduction = np.zeros((len(fs),numsteps))
         for idx, f in enumerate(fs):
@@ -156,28 +170,33 @@ if __name__ == "__main__":
             controlB = control[:,5,5]
             controlC = control[:,10,10]
             controlD = control[:,15,15]
-
+            
             fName = f'control_s{idx}_v{fidx}.pdf'
             fig, ax = plt.subplots(4,1)
-            ax[0].plot(np.arange(numsteps), controlA, linestyle='-', lw=1, color='mediumturquoise')
-            ax[0].set_xticks(np.arange(0,numsteps,500)) 
+            ax[0].plot(xaxis, controlA, linestyle='-', lw=1, color='mediumturquoise')
+            ax[0].set_xticks(xticks)
             ax[0].set_xticklabels([]) 
-            #ax[0].set_ylim([-0.1,0.1]) 
+            ax[0].set_yticks([-maxv,0,maxv]) 
+            ax[0].set_ylim([-maxv,maxv]) 
 
-            ax[1].plot(np.arange(numsteps), controlB, linestyle='-', lw=1, color='mediumturquoise')
-            ax[1].set_xticks(np.arange(0,numsteps,500)) 
+            ax[1].plot(xaxis, controlB, linestyle='-', lw=1, color='mediumturquoise')
+            ax[1].set_xticks(xticks)
             ax[1].set_xticklabels([]) 
-            #ax[1].set_ylim([-0.1,0.1]) 
+            ax[1].set_yticks([-maxv,0,maxv]) 
+            ax[1].set_ylim([-maxv,maxv]) 
 
-            ax[2].plot(np.arange(numsteps), controlC, linestyle='-', lw=1, color='mediumturquoise')
-            ax[2].set_xticks(np.arange(0,numsteps,500)) 
+            ax[2].plot(xaxis, controlC, linestyle='-', lw=1, color='mediumturquoise')
+            ax[2].set_xticks(xticks)
             ax[2].set_xticklabels([]) 
-            #ax[1].set_ylim([-0.1,0.1]) 
+            ax[2].set_yticks([-maxv,0,maxv]) 
+            ax[2].set_ylim([-maxv,maxv]) 
 
-            ax[3].plot(np.arange(numsteps), controlC, linestyle='-', lw=1, color='mediumturquoise')
-            ax[3].set_xticks(np.arange(0,numsteps,500)) 
-            ax[3].set_xticklabels([]) 
-            #ax[1].set_ylim([-0.1,0.1]) 
+            ax[3].plot(xaxis, controlC, linestyle='-', lw=1, color='mediumturquoise')
+            ax[3].set_xticks(xticks)
+            #ax[3].set_xticklabels(xticks) 
+            ax[3].set_yticks([-maxv,0,maxv]) 
+            ax[3].set_ylim([-maxv,maxv]) 
+
 
             plt.tight_layout()
             plt.savefig(fName)
